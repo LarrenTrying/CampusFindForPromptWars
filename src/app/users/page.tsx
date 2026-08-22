@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { UserStats } from "@/lib/auth/userStore";
+import { useAuth } from "@/context/AuthContext";
 import {
   Users,
   Search,
@@ -9,23 +10,33 @@ import {
   Hash,
   FileText,
   CheckCircle2,
-  HelpCircle,
-  Package,
+  Lock,
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Sparkles,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 
 export default function UsersDirectoryPage() {
+  const { user, isAdmin, login } = useAuth();
   const [users, setUsers] = useState<UserStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "student" | "admin">("all");
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
+  // Admin gate state
+  const [adminIdInput, setAdminIdInput] = useState("");
+  const [adminPasswordInput, setAdminPasswordInput] = useState("");
+  const [adminLoginLoading, setAdminLoginLoading] = useState(false);
+  const [adminLoginError, setAdminLoginError] = useState("");
+
   const fetchUsers = async () => {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/users");
@@ -41,8 +52,93 @@ export default function UsersDirectoryPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (isAdmin) {
+      fetchUsers();
+    } else {
+      setLoading(false);
+    }
+  }, [isAdmin]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminLoginError("");
+    setAdminLoginLoading(true);
+    try {
+      const res = await login(adminIdInput, adminPasswordInput);
+      if (!res.success) {
+        setAdminLoginError(res.error || "Administrator authentication failed.");
+      }
+    } finally {
+      setAdminLoginLoading(false);
+    }
+  };
+
+  if (!isAdmin) {
+    return (
+      <div className="max-w-md mx-auto py-12 space-y-6 animate-fadeIn">
+        <div className="glass-panel p-8 rounded-3xl border border-amber-500/30 bg-slate-900/90 shadow-2xl space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+              <Lock className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Administrator Access Required</h2>
+              <p className="text-xs text-slate-400">
+                The User Directory is restricted to authorized campus administrators.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Admin Campus ID
+              </label>
+              <input
+                type="text"
+                maxLength={5}
+                value={adminIdInput}
+                onChange={(e) => setAdminIdInput(e.target.value.replace(/\D/g, ""))}
+                placeholder="Enter 5-digit Admin ID"
+                required
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Admin Password
+              </label>
+              <input
+                type="password"
+                value={adminPasswordInput}
+                onChange={(e) => setAdminPasswordInput(e.target.value)}
+                placeholder="Enter admin password"
+                required
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            {adminLoginError && (
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{adminLoginError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={adminLoginLoading}
+              className="w-full py-3 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>{adminLoginLoading ? "Verifying Authority..." : "Unlock Administrator Directory"}</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -65,15 +161,15 @@ export default function UsersDirectoryPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">
-            <Users className="w-4 h-4" />
-            <span>Campus Registry & Activity Ledger</span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Administrator Control Console</span>
           </div>
           <h1 className="text-3xl font-extrabold text-white">
-            User Directory & Report Ledger
+            Campus User Directory & Report Ledger
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Complete directory of registered 5-digit campus student IDs, administrator roles, and real-time report statistics.
+            Complete registry of 5-digit campus student IDs, administrator privileges, and active report statistics.
           </p>
         </div>
 
@@ -91,7 +187,7 @@ export default function UsersDirectoryPage() {
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
           <span className="text-xs text-slate-400 font-semibold uppercase">Total Campus Users</span>
           <div className="text-2xl font-extrabold text-white">{users.length}</div>
-          <span className="text-[11px] text-slate-500">Registered with 5-digit IDs</span>
+          <span className="text-[11px] text-slate-500">Registered student IDs</span>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
@@ -122,7 +218,7 @@ export default function UsersDirectoryPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name or 5-digit ID..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"
           />
         </div>
 
@@ -133,7 +229,7 @@ export default function UsersDirectoryPage() {
               onClick={() => setRoleFilter(r)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition ${
                 roleFilter === r
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                  ? "bg-amber-600 text-white shadow-md shadow-amber-600/20"
                   : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
               }`}
             >
@@ -163,7 +259,7 @@ export default function UsersDirectoryPage() {
               {loading ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-500">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-400" />
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-400" />
                     <span>Loading campus user records...</span>
                   </td>
                 </tr>

@@ -9,12 +9,10 @@ import {
   Search, 
   PlusCircle, 
   Compass, 
-  User,
   Users,
   ShieldCheck,
   LogOut,
-  KeyRound,
-  Hash
+  KeyRound
 } from "lucide-react";
 import { StatusIndicator } from "./StatusIndicator";
 
@@ -23,12 +21,11 @@ export const Navbar: React.FC = () => {
   const { user, logout, isAdmin } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
+  // Clean Navigation Links (Submit Report next to Explore Feed removed, AI Match Hub removed)
   const navLinks = [
     { href: "/", label: "Explore Feed", icon: Compass },
-    { href: "/submit", label: "Submit Report", icon: PlusCircle },
     { href: "/search", label: "Semantic Search", icon: Search },
-    { href: "/match", label: "AI Match Hub", icon: Sparkles },
-    { href: "/users", label: "User Directory", icon: Users },
+    ...(isAdmin ? [{ href: "/users", label: "User Directory", icon: Users }] : []),
   ];
 
   return (
@@ -59,7 +56,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* Nav Items */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1.5">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
@@ -67,7 +64,7 @@ export const Navbar: React.FC = () => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition ${
                       isActive
                         ? "bg-indigo-600/15 text-indigo-300 border border-indigo-500/30"
                         : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
@@ -80,13 +77,17 @@ export const Navbar: React.FC = () => {
               })}
             </nav>
 
-            {/* Right Action: 5-Digit User Auth State */}
+            {/* Right Action: 5-Digit User Auth State + Report Item Action */}
             <div className="flex items-center gap-3">
               <StatusIndicator />
 
               {user ? (
                 <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center font-mono font-bold text-indigo-300 text-[11px]">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-bold text-[11px] ${
+                    isAdmin
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                      : "bg-indigo-600/30 border border-indigo-500/50 text-indigo-300"
+                  }`}>
                     {isAdmin ? "ADM" : "#"}
                   </div>
 
@@ -97,7 +98,7 @@ export const Navbar: React.FC = () => {
                     {isAdmin ? (
                       <span className="text-[10px] text-amber-400 font-bold flex items-center gap-0.5">
                         <ShieldCheck className="w-2.5 h-2.5" />
-                        Admin ID #43554
+                        Admin
                       </span>
                     ) : (
                       <span className="text-[10px] font-mono text-indigo-300">
