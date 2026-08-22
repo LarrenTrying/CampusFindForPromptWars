@@ -102,8 +102,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     const secretPin = body.secret_pin || Math.floor(1000 + Math.random() * 9000).toString();
 
     // 4. Save to Supabase pgvector or MockDb
-    const campusId = body.reporter_campus_id || "90421";
-    const userPin = body.reporter_pin || body.secret_pin || secretPin;
+    const userEmail = (body.reporter_email || body.contact_info || "student@gmail.com").toLowerCase();
 
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
@@ -117,10 +116,8 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           location: body.location,
           date_time: body.date_time || new Date().toISOString(),
           contact_name: body.contact_name,
-          contact_info: body.contact_info,
-          reporter_campus_id: campusId,
-          reporter_pin: userPin,
-          secret_pin: userPin,
+          contact_info: body.contact_info || userEmail,
+          reporter_email: userEmail,
           status: "active",
           attributes: {
             ...extractedAttributes,
@@ -139,8 +136,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           return NextResponse.json({
             success: true,
             report: data,
-            reporter_campus_id: campusId,
-            secret_pin: userPin,
+            reporter_email: userEmail,
             source: "supabase",
           });
         }
@@ -152,9 +148,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     const newReport = MockDb.createReport(
       {
         ...body,
-        reporter_campus_id: campusId,
-        reporter_pin: userPin,
-        secret_pin: userPin,
+        reporter_email: userEmail,
       },
       extractedAttributes,
       embedding
@@ -163,8 +157,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     return NextResponse.json({
       success: true,
       report: newReport,
-      reporter_campus_id: campusId,
-      secret_pin: userPin,
+      reporter_email: userEmail,
       source: "mock_db",
     });
   } catch (error: any) {

@@ -1,7 +1,7 @@
 import { Report, ReportType, ItemCategory, CreateReportInput } from "@/types/report";
 import { computeCosineSimilarity, generateDeterministicEmbedding } from "../utils";
 
-// Purely Campus-Focused Lost & Found Pairs with 5-digit campus IDs
+// Purely Campus-Focused Lost & Found Pairs with Google Mail Accounts
 const INITIAL_REPORTS: Report[] = [
   {
     id: "rep-101",
@@ -13,7 +13,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Main Campus Library, 2nd Floor Study Area",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
     contact_name: "Sarah Lin",
-    contact_info: "sarah.lin@campus.edu | (555) 234-5678",
+    contact_info: "sarah.lin@gmail.com | (555) 234-5678",
+    reporter_email: "sarah.lin@gmail.com",
     reporter_campus_id: "90421",
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -45,7 +46,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Library Front Circulation Desk (found on 2nd Floor)",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(), // 22 hours ago
     contact_name: "Library Desk Staff (Admin)",
-    contact_info: "library-desk@campus.edu | Ext. 402",
+    contact_info: "campusadmin@gmail.com | Ext. 402",
+    reporter_email: "campusadmin@gmail.com",
     reporter_campus_id: "43554", // Admin
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -77,7 +79,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Student Union Lounge & Dining Hall",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
     contact_name: "David Kim",
-    contact_info: "dkim99@campus.edu | (555) 789-0123",
+    contact_info: "david.kim@gmail.com | (555) 789-0123",
+    reporter_email: "david.kim@gmail.com",
     reporter_campus_id: "71829",
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -108,7 +111,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Student Union Info Desk (found near coffee kiosk)",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
     contact_name: "Student Services Desk (Admin)",
-    contact_info: "student-services@campus.edu | (555) 345-HELP",
+    contact_info: "campusadmin@gmail.com | (555) 345-HELP",
+    reporter_email: "campusadmin@gmail.com",
     reporter_campus_id: "43554", // Admin
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -139,7 +143,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Science & Tech Hall, Lecture Room 101",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
     contact_name: "Maya Patel",
-    contact_info: "mpatel@campus.edu | (555) 441-2091",
+    contact_info: "maya.patel@gmail.com | (555) 441-2091",
+    reporter_email: "maya.patel@gmail.com",
     reporter_campus_id: "55120",
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -171,7 +176,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Science Hall TA Office Room 204 (Found in Room 101)",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
     contact_name: "Math TA Office (Admin)",
-    contact_info: "math-ta@campus.edu | Office 204",
+    contact_info: "campusadmin@gmail.com | Office 204",
+    reporter_email: "campusadmin@gmail.com",
     reporter_campus_id: "43554", // Admin
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -203,7 +209,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Campus Recreation Center - Men's Locker Room",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
     contact_name: "Alex Thorne",
-    contact_info: "alex.t@campus.edu | 555-0192",
+    contact_info: "alex.thorne@gmail.com | 555-0192",
+    reporter_email: "alex.thorne@gmail.com",
     reporter_campus_id: "88219",
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -235,7 +242,8 @@ const INITIAL_REPORTS: Report[] = [
     location: "Engineering Quad Walkway near North Quad",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
     contact_name: "Chloe Miller",
-    contact_info: "chloe.m@campus.edu",
+    contact_info: "chloe.miller@gmail.com",
+    reporter_email: "chloe.miller@gmail.com",
     reporter_campus_id: "66401",
     reporter_pin: "1234",
     secret_pin: "1234",
@@ -314,7 +322,7 @@ export const MockDb = {
           r.title.toLowerCase().includes(q) ||
           r.description.toLowerCase().includes(q) ||
           r.location.toLowerCase().includes(q) ||
-          (r.reporter_campus_id && r.reporter_campus_id.includes(q)) ||
+          (r.reporter_email && r.reporter_email.toLowerCase().includes(q)) ||
           r.attributes?.brand?.toLowerCase().includes(q) ||
           r.attributes?.primary_color?.toLowerCase().includes(q)
       );
@@ -347,9 +355,7 @@ export const MockDb = {
       date_time: input.date_time || new Date().toISOString(),
       contact_name: input.contact_name,
       contact_info: input.contact_info,
-      reporter_campus_id: input.reporter_campus_id || "90421",
-      reporter_pin: input.reporter_pin || input.secret_pin || "1234",
-      secret_pin: input.secret_pin || input.reporter_pin || "1234",
+      reporter_email: input.reporter_email || "student@gmail.com",
       status: "active",
       attributes: {
         ...extractedAttributes,

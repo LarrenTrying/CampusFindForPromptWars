@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth, ADMIN_CAMPUS_ID } from "@/context/AuthContext";
-import { Lock, ShieldCheck, CheckCircle2, AlertCircle, Key, User, X } from "lucide-react";
+import { useAuth, ADMIN_EMAILS } from "@/context/AuthContext";
+import { Lock, ShieldCheck, CheckCircle2, AlertCircle, Mail, User, X } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface ClaimModalProps {
@@ -11,7 +11,7 @@ interface ClaimModalProps {
   reportId: string;
   reportTitle: string;
   sourceReportId?: string;
-  reporterCampusId?: string;
+  reporterEmail?: string;
   onSuccess: () => void;
 }
 
@@ -21,34 +21,30 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
   reportId,
   reportTitle,
   sourceReportId,
-  reporterCampusId,
+  reporterEmail,
   onSuccess,
 }) => {
   const { user, isAdmin } = useAuth();
-  const [campusId, setCampusId] = useState(user?.campus_id || "");
-  const [pin, setPin] = useState(user?.pin || "");
+  const [emailInput, setEmailInput] = useState(user?.email || "");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
   const [authorizedBy, setAuthorizedBy] = useState("");
 
   useEffect(() => {
-    if (user?.campus_id) {
-      setCampusId(user.campus_id);
-    }
-    if (user?.pin) {
-      setPin(user.pin);
+    if (user?.email) {
+      setEmailInput(user.email);
     }
   }, [user, isOpen]);
 
   if (!isOpen) return null;
 
-  const isCurrentAdmin = campusId.trim() === ADMIN_CAMPUS_ID || isAdmin;
+  const isCurrentAdmin = user?.is_admin || isAdmin;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campusId || !pin) {
-      setErrorMsg("Please enter your 5-digit Campus ID and PIN.");
+    if (!emailInput) {
+      setErrorMsg("Please enter your Google Mail address to verify ownership.");
       return;
     }
 
@@ -62,8 +58,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: "resolved",
-          campus_id: campusId.trim(),
-          pin: pin.trim(),
+          email: emailInput.trim(),
         }),
       });
 
@@ -79,8 +74,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             status: "resolved",
-            campus_id: campusId.trim(),
-            pin: pin.trim(),
+            email: emailInput.trim(),
           }),
         });
       }
@@ -99,7 +93,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
         onClose();
       }, 1800);
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid credentials or unauthorized.");
+      setErrorMsg(err.message || "Invalid Google account or unauthorized.");
     } finally {
       setSubmitting(false);
     }
@@ -107,16 +101,16 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-5">
+      <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-5">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+          className="absolute top-5 right-5 text-slate-400 hover:text-white transition"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
             <Lock className="w-5 h-5 text-indigo-400" />
           </div>
           <div>
@@ -124,20 +118,20 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
               Authorize Claim & Resolution
             </h3>
             <p className="text-xs text-slate-400">
-              Requires 5-digit Reporter ID + PIN or Campus Admin ID <strong className="text-amber-400">43554</strong>.
+              Requires Google Mail verification of the reporter or campus administrator.
             </p>
           </div>
         </div>
 
         {/* Item Summary */}
-        <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs flex items-center justify-between">
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-semibold">Item</span>
             <span className="font-semibold text-slate-200 line-clamp-1">{reportTitle}</span>
           </div>
-          {reporterCampusId && (
-            <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
-              Reporter: ID #{reporterCampusId}
+          {reporterEmail && (
+            <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 max-w-[150px] truncate">
+              {reporterEmail}
             </span>
           )}
         </div>
@@ -145,66 +139,46 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
         {success ? (
           <div className="py-6 text-center space-y-2">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-bounce" />
-            <h4 className="text-base font-bold text-emerald-300">Authority Verified & Resolved!</h4>
+            <h4 className="text-base font-bold text-emerald-300">Identity Verified & Resolved!</h4>
             <p className="text-xs text-slate-400">
-              {authorizedBy} successfully resolved this item. Moved to <span className="text-indigo-300 font-semibold">Reunited Archive</span>.
+              {authorizedBy} marked this item as resolved. Moved to <span className="text-indigo-300 font-semibold">Reunited Archive</span>.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Campus 5-digit ID */}
+            {/* Google Mail Input */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>5-Digit Campus ID Number</span>
+                  <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Google Mail Account</span>
                 </label>
                 {isCurrentAdmin && (
                   <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3" />
-                    Admin ID 43554
+                    Admin Account
                   </span>
                 )}
               </div>
               <input
-                type="text"
-                maxLength={5}
-                value={campusId}
-                onChange={(e) => setCampusId(e.target.value.replace(/\D/g, ""))}
-                placeholder="Enter 5-digit ID (or 43554 for Admin)"
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono tracking-widest text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            {/* Custom PIN */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Security PIN</span>
-              </label>
-              <input
-                type="password"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="Enter your security PIN"
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="e.g. your.email@gmail.com"
                 required
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
-            {/* Admin Key Quick Hint */}
-            <div className="p-2.5 rounded-lg bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
-              <span>Admin ID for evaluation:</span>
+            {/* Quick Demo Hint */}
+            <div className="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
+              <span>Admin account for evaluation:</span>
               <button
                 type="button"
-                onClick={() => {
-                  setCampusId(ADMIN_CAMPUS_ID);
-                  setPin("1234");
-                }}
+                onClick={() => setEmailInput("campusadmin@gmail.com")}
                 className="bg-indigo-900/70 hover:bg-indigo-900 px-2 py-0.5 rounded text-indigo-200 font-mono font-bold text-[11px] border border-indigo-500/30 transition"
               >
-                Use Admin ID: 43554
+                campusadmin@gmail.com
               </button>
             </div>
 
@@ -221,7 +195,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
               className="w-full py-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>{submitting ? "Verifying Authority..." : "Verify & Resolve Case"}</span>
+              <span>{submitting ? "Verifying Google Account..." : "Verify & Resolve Case"}</span>
             </button>
           </form>
         )}

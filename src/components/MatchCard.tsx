@@ -57,7 +57,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         reportId={candidate.report.id}
         reportTitle={candidate.report.title}
         sourceReportId={sourceReport.id}
-        reporterCampusId={candidate.report.reporter_campus_id}
+        reporterEmail={candidate.report.reporter_email}
         onSuccess={handleClaimSuccess}
       />
 

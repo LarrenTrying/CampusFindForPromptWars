@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase, isServerSupabaseConfigured } from "@/lib/supabase/server";
 import { MockDb } from "@/lib/db/mockDb";
 
-const ADMIN_CAMPUS_ID = "43554";
-const ADMIN_PASSKEYS = ["43554", "campusadmin", "admin123", process.env.ADMIN_KEY].filter(Boolean);
+const ADMIN_EMAILS = [
+  "campusadmin@gmail.com",
+  "admin@campus.edu",
+  "admin@gmail.com",
+  "lostandfound@campus.edu",
+  "admin",
+  "campusadmin",
+];
 
 export async function GET(
   request: NextRequest,
@@ -52,9 +58,8 @@ export async function PATCH(
     const id = params.id;
     const body = await request.json();
     const status = body.status;
-    const campusId = (body.campus_id || body.campusId || "").toString().trim();
-    const pin = (body.pin || body.passkey || "").toString().trim();
-    const contactVerification = (body.email || body.contact || "").toString().trim().toLowerCase();
+    const userEmail = (body.email || body.reporter_email || body.campus_id || "").toString().trim().toLowerCase();
+    const passkey = (body.passkey || body.pin || "").toString().trim().toLowerCase();
 
     if (!["active", "matched", "resolved"].includes(status)) {
       return NextResponse.json(
@@ -81,37 +86,28 @@ export async function PATCH(
     }
 
     // 2. Authorization Verification
-    // Condition A: Admin ID 43554 or Admin Passkey
+    // Condition A: Campus Admin Email or Admin Key
     const isAdmin =
-      campusId === ADMIN_CAMPUS_ID ||
-      ADMIN_PASSKEYS.some((k) => k && k.toString().toLowerCase() === pin.toLowerCase()) ||
-      ADMIN_PASSKEYS.some((k) => k && k.toString().toLowerCase() === campusId.toLowerCase());
+      ADMIN_EMAILS.some((adm) => userEmail && userEmail.includes(adm)) ||
+      ADMIN_EMAILS.some((adm) => passkey && passkey.includes(adm)) ||
+      userEmail === "43554" ||
+      passkey === "43554";
 
-    // Condition B: Original Reporter (5-digit Campus ID match + PIN match)
-    const isReporterIdMatch =
-      currentReport.reporter_campus_id &&
-      campusId &&
-      currentReport.reporter_campus_id.toString().trim() === campusId;
+    // Condition B: Reporter Google Mail / Contact match
+    const reporterEmail = (currentReport.reporter_email || currentReport.contact_info || "").toLowerCase();
+    const isReporterMatch =
+      userEmail &&
+      (reporterEmail.includes(userEmail) || userEmail.includes(reporterEmail.split("@")[0]));
 
-    const isPinMatch =
-      (currentReport.reporter_pin && currentReport.reporter_pin.toString().trim() === pin) ||
-      (currentReport.secret_pin && currentReport.secret_pin.toString().trim() === pin);
-
-    // Condition C: Contact Info / Email match
-    const isContactMatch =
-      contactVerification &&
-      (currentReport.contact_info.toLowerCase().includes(contactVerification) ||
-        currentReport.contact_name.toLowerCase().includes(contactVerification));
-
-    const isAuthorized = isAdmin || (isReporterIdMatch && isPinMatch) || (isContactMatch && isPinMatch) || isPinMatch;
+    const isAuthorized = isAdmin || isReporterMatch;
 
     if (!isAuthorized) {
       return NextResponse.json(
         {
           success: false,
-          error: `Unauthorized: This report can only be resolved by the original reporter (ID: ${
-            currentReport.reporter_campus_id || "Reporter"
-          }) with their PIN, or the Campus Administrator (Admin ID: ${ADMIN_CAMPUS_ID}).`,
+          error: `Unauthorized: This report can only be resolved by the original owner (${
+            currentReport.reporter_email || currentReport.contact_info || "Original Reporter"
+          }) or the Campus Administrator.`,
         },
         { status: 403 }
       );
@@ -119,8 +115,8 @@ export async function PATCH(
 
     // 3. Update status in Database
     const authorizedBy = isAdmin
-      ? `Campus Administrator (Admin ID: ${ADMIN_CAMPUS_ID})`
-      : `Verified Reporter (Campus ID: ${campusId || currentReport.reporter_campus_id || "Student"})`;
+      ? "Campus Administrator"
+      : `Verified Reporter (${userEmail || "Google Account"})`;
 
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();

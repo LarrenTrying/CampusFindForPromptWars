@@ -38,8 +38,9 @@ export interface Report {
   date_time: string;
   contact_name: string;
   contact_info: string;
-  reporter_campus_id?: string; // 5-digit campus ID (e.g. 90421)
-  reporter_pin?: string;        // Secret PIN set by user
+  reporter_email?: string;       // Google Mail address (e.g. user@gmail.com)
+  reporter_campus_id?: string;   // 5-digit campus ID
+  reporter_pin?: string;
   secret_pin?: string;
   status: ReportStatus;
   attributes: ReportAttributes;
@@ -59,6 +60,7 @@ export interface CreateReportInput {
   date_time: string;
   contact_name: string;
   contact_info: string;
+  reporter_email?: string;
   reporter_campus_id?: string;
   reporter_pin?: string;
   secret_pin?: string;

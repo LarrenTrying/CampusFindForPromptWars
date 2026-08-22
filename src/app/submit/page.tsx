@@ -3,8 +3,7 @@
 import React, { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ReportType, ItemCategory, ReportAttributes } from "@/types/report";
-import { useAuth, ADMIN_CAMPUS_ID } from "@/context/AuthContext";
-import { LoginModal } from "@/components/LoginModal";
+import { useAuth } from "@/context/AuthContext";
 import {
   Sparkles,
   Upload,
@@ -19,7 +18,7 @@ import {
   ArrowRight,
   Lock,
   ShieldCheck,
-  Key
+  Mail
 } from "lucide-react";
 
 const CATEGORIES: ItemCategory[] = [
@@ -44,7 +43,7 @@ const PRESETS = [
     location: "Main Campus Library, 2nd Floor Study Area",
     image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     name: "Sarah Lin",
-    contact: "sarah.lin@campus.edu | (555) 234-5678",
+    contact: "sarah.lin@gmail.com | (555) 234-5678",
   },
   {
     label: "TI-84 Calculator (Lost)",
@@ -55,7 +54,7 @@ const PRESETS = [
     location: "Science & Tech Hall, Lecture Room 101",
     image: "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?auto=format&fit=crop&w=800&q=80",
     name: "Maya Patel",
-    contact: "mpatel@campus.edu",
+    contact: "mpatel@gmail.com",
   },
   {
     label: "Dorm & Car Keys (Lost)",
@@ -66,14 +65,14 @@ const PRESETS = [
     location: "Engineering Quad Walkway near North Quad",
     image: "https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=800&q=80",
     name: "Chloe Miller",
-    contact: "chloe.m@campus.edu",
+    contact: "chloe.m@gmail.com",
   },
 ];
 
 function SubmitFormContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ReportType) || "lost";
-  const { user, login, isAdmin } = useAuth();
+  const { user, loginWithGoogle, isAdmin } = useAuth();
 
   const [type, setType] = useState<ReportType>(initialType);
   const [title, setTitle] = useState("");
@@ -84,47 +83,35 @@ function SubmitFormContent() {
     new Date().toISOString().slice(0, 16)
   );
   const [contactName, setContactName] = useState(user?.name || "");
-  const [contactInfo, setContactInfo] = useState("");
+  const [contactInfo, setContactInfo] = useState(user?.email || "");
   const [imageUrl, setImageUrl] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
-  // Inline login state if not logged in
-  const [loginCampusId, setLoginCampusId] = useState("");
-  const [loginPin, setLoginPin] = useState("");
-  const [loginName, setLoginName] = useState("");
-  const [loginError, setLoginError] = useState("");
+  // Inline Google login state
+  const [googleEmailInput, setGoogleEmailInput] = useState("");
+  const [googleNameInput, setGoogleNameInput] = useState("");
+  const [googleLoggingIn, setGoogleLoggingIn] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [extractedAttributes, setExtractedAttributes] = useState<ReportAttributes | null>(null);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
-  const [createdReportPin, setCreatedReportPin] = useState<string | null>(null);
-  const [createdReportCampusId, setCreatedReportCampusId] = useState<string | null>(null);
+  const [createdReportEmail, setCreatedReportEmail] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (user?.name && !contactName) {
-      setContactName(user.name);
+    if (user) {
+      if (user.name) setContactName(user.name);
+      if (user.email) setContactInfo(user.email);
     }
   }, [user]);
 
-  const handleInlineLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError("");
-
-    if (!/^\d{5}$/.test(loginCampusId.trim())) {
-      setLoginError("Campus ID must be exactly a 5-digit number (e.g. 90421 or 43554 for Admin).");
-      return;
-    }
-
-    if (!loginPin || loginPin.length < 3) {
-      setLoginError("PIN must be at least 3 characters.");
-      return;
-    }
-
-    const ok = login(loginCampusId, loginPin, loginName);
-    if (!ok) {
-      setLoginError("Login failed. Please check your 5-digit ID.");
+  const handleGoogleLoginSubmit = async (overrideEmail?: string, overrideName?: string) => {
+    setGoogleLoggingIn(true);
+    try {
+      await loginWithGoogle(overrideEmail || googleEmailInput, overrideName || googleNameInput);
+    } finally {
+      setGoogleLoggingIn(false);
     }
   };
 
@@ -156,7 +143,7 @@ function SubmitFormContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      setErrorMsg("You must be logged in with your 5-digit Campus ID to submit a report.");
+      setErrorMsg("You must be signed in with your Google Mail account to submit a report.");
       return;
     }
 
@@ -180,10 +167,8 @@ function SubmitFormContent() {
         location,
         date_time: new Date(dateTime).toISOString(),
         contact_name: contactName,
-        contact_info: contactInfo || `Campus ID #${user.campus_id}`,
-        reporter_campus_id: user.campus_id,
-        reporter_pin: user.pin || "1234",
-        secret_pin: user.pin || "1234",
+        contact_info: contactInfo || user.email,
+        reporter_email: user.email,
       };
 
       const res = await fetch("/api/reports", {
@@ -199,8 +184,7 @@ function SubmitFormContent() {
 
       setExtractedAttributes(data.report.attributes);
       setCreatedReportId(data.report.id);
-      setCreatedReportPin(user.pin || "1234");
-      setCreatedReportCampusId(user.campus_id);
+      setCreatedReportEmail(user.email);
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during report submission.");
     } finally {
@@ -225,110 +209,128 @@ function SubmitFormContent() {
         </p>
       </div>
 
-      {/* Mandatory Authentication Gate if Not Logged In */}
+      {/* Mandatory Google Authentication Gate if Not Signed In */}
       {!user ? (
         <div className="glass-panel rounded-3xl p-8 border border-indigo-500/30 bg-slate-900/90 shadow-2xl space-y-6 animate-fadeIn">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
-              <Lock className="w-6 h-6 text-indigo-400" />
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md">
+              <svg className="w-6 h-6" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
-                Campus Login Required
+                Google Mail Authentication Required
               </h2>
               <p className="text-xs text-slate-300">
-                Please sign in with your <strong className="text-indigo-300">5-digit Campus ID</strong> and PIN to submit and track your report.
+                Please sign in with your <strong className="text-indigo-300">Google Mail</strong> account to submit and track your report.
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleInlineLogin} className="space-y-4 max-w-md">
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-slate-300">
-                  5-Digit Campus ID Number <span className="text-rose-400">*</span>
-                </label>
-                {loginCampusId.trim() === ADMIN_CAMPUS_ID && (
-                  <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
-                    Admin ID 43554
-                  </span>
-                )}
-              </div>
-              <input
-                type="text"
-                maxLength={5}
-                value={loginCampusId}
-                onChange={(e) => setLoginCampusId(e.target.value.replace(/\D/g, ""))}
-                placeholder="e.g. 90421 (or 43554 for Admin)"
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono tracking-widest text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
+          <div className="space-y-4 max-w-md">
+            {/* Primary Continue with Google Button */}
+            <button
+              type="button"
+              onClick={() => handleGoogleLoginSubmit()}
+              disabled={googleLoggingIn}
+              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm shadow-xl flex items-center justify-center gap-3 transition active:scale-98"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>{googleLoggingIn ? "Connecting to Google..." : "Continue with Google Mail"}</span>
+            </button>
+
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex-1 h-[1px] bg-slate-800" />
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">Or Enter Gmail</span>
+              <div className="flex-1 h-[1px] bg-slate-800" />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Security PIN <span className="text-rose-400">*</span>
-              </label>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleGoogleLoginSubmit();
+              }}
+              className="space-y-3"
+            >
               <input
-                type="password"
-                value={loginPin}
-                onChange={(e) => setLoginPin(e.target.value)}
-                placeholder="Enter a PIN to authorize your reports"
-                required
+                type="email"
+                value={googleEmailInput}
+                onChange={(e) => setGoogleEmailInput(e.target.value)}
+                placeholder="your.email@gmail.com"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Your Name (Optional)
-              </label>
-              <input
-                type="text"
-                value={loginName}
-                onChange={(e) => setLoginName(e.target.value)}
-                placeholder="e.g. Sarah Lin"
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            {loginError && (
-              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>{loginError}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition active:scale-98"
-            >
-              Sign In to Continue
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition active:scale-98"
+              >
+                Sign In & Unlock Form
+              </button>
+            </form>
+          </div>
         </div>
       ) : (
         <>
           {/* User Status Banner */}
           <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              {isAdmin ? (
-                <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0" />
+            <div className="flex items-center gap-3">
+              {user.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full border border-indigo-400"
+                />
               ) : (
-                <User className="w-5 h-5 text-indigo-400 shrink-0" />
+                <User className="w-6 h-6 text-indigo-400 shrink-0" />
               )}
               <div>
                 <span className="font-bold text-white block">
-                  Logged in as {isAdmin ? "Campus Administrator (ID: 43554)" : `Student ID #${user.campus_id}`}
+                  Signed in as {user.name} ({user.email})
                 </span>
                 <span className="text-slate-400">
-                  This report will be registered under your ID and can only be resolved by you or Admin 43554.
+                  This report will be tied to your Google account. Only you (or Campus Admin) can resolve it.
                 </span>
               </div>
             </div>
-            <span className="px-2.5 py-1 rounded-lg bg-indigo-900/60 font-mono font-bold text-indigo-300 border border-indigo-500/30 shrink-0">
-              ID #{user.campus_id}
-            </span>
+            {isAdmin && (
+              <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shrink-0 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Admin
+              </span>
+            )}
           </div>
 
           {/* Quick Presets for Demo / Testing */}
@@ -359,7 +361,7 @@ function SubmitFormContent() {
                       Report Created & Embedded in Supabase pgvector!
                     </h3>
                     <p className="text-xs text-slate-300">
-                      Registered under <strong className="text-indigo-300 font-mono">Campus ID #{createdReportCampusId}</strong>.
+                      Tied to Google Account: <strong className="text-indigo-300">{createdReportEmail}</strong>.
                     </p>
                   </div>
                 </div>
@@ -633,13 +635,13 @@ function SubmitFormContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-slate-300">
-                    Your Full Name <span className="text-rose-400">*</span>
+                    Your Name <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
-                    placeholder="e.g. Sarah Lin or Alex Johnson"
+                    placeholder="e.g. Sarah Lin"
                     required
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
@@ -647,13 +649,13 @@ function SubmitFormContent() {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-slate-300">
-                    Email / Phone Contact <span className="text-rose-400">*</span>
+                    Google Mail / Phone Contact <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={contactInfo}
                     onChange={(e) => setContactInfo(e.target.value)}
-                    placeholder="e.g. sarah.lin@campus.edu | 555-0192"
+                    placeholder="e.g. sarah.lin@gmail.com | 555-0192"
                     required
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
