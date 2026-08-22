@@ -30,43 +30,13 @@ export interface UserStats {
 export const ADMIN_ID = "43554";
 export const ADMIN_PASSWORD = "JustAnAlt";
 
-// Initial campus registry
+// Only master Admin is pre-registered; all other users register on-the-fly with their 5-digit ID & password
 const INITIAL_USERS: StoredUser[] = [
   {
     campus_id: ADMIN_ID,
     password: ADMIN_PASSWORD,
     name: "Campus Administrator",
     is_admin: true,
-  },
-  {
-    campus_id: "90421",
-    password: "1234",
-    name: "Sarah Lin",
-    is_admin: false,
-  },
-  {
-    campus_id: "71829",
-    password: "1234",
-    name: "David Kim",
-    is_admin: false,
-  },
-  {
-    campus_id: "55120",
-    password: "1234",
-    name: "Maya Patel",
-    is_admin: false,
-  },
-  {
-    campus_id: "66401",
-    password: "1234",
-    name: "Chloe Miller",
-    is_admin: false,
-  },
-  {
-    campus_id: "88219",
-    password: "1234",
-    name: "Alex Thorne",
-    is_admin: false,
   },
 ];
 
@@ -201,7 +171,7 @@ export const UserStore = {
     const map = getUsersMap();
     const allReports = MockDb.getAllReports();
 
-    // Also include any reporter IDs that exist in reports but not in map
+    // Include any reporter IDs that exist in reports
     for (const r of allReports) {
       if (r.reporter_campus_id && !map.has(r.reporter_campus_id)) {
         map.set(r.reporter_campus_id, {

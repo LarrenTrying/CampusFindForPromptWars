@@ -3,16 +3,16 @@ import { MockDb } from "@/lib/db/mockDb";
 
 export async function POST() {
   try {
-    const refreshed = MockDb.resetToSeedData();
+    MockDb.clearAllReports();
     return NextResponse.json({
       success: true,
-      message: "Database successfully populated with realistic paired lost & found cases!",
-      count: refreshed.length,
-      reports: refreshed,
+      message: "Database cleared of all mock reports.",
+      count: 0,
+      reports: [],
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to seed database" },
+      { success: false, error: error.message || "Failed to clear database" },
       { status: 500 }
     );
   }

@@ -35,42 +35,6 @@ const CATEGORIES: ItemCategory[] = [
   "Other",
 ];
 
-const PRESETS = [
-  {
-    label: "MacBook Air (Lost)",
-    type: "lost" as ReportType,
-    title: "Space Gray MacBook Air M2 13-inch",
-    category: "Electronics & Laptops",
-    description: "Lost my Space Gray MacBook Air M2 in the campus main library 2nd floor study nook. It has an octocat GitHub sticker and an OpenAI sticker on the lid. Left around 3:30 PM.",
-    location: "Main Campus Library, 2nd Floor Study Area",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
-    name: "Sarah Lin",
-    contact: "sarah.lin@campus.edu | (555) 234-5678",
-  },
-  {
-    label: "TI-84 Calculator (Lost)",
-    type: "lost" as ReportType,
-    title: "TI-84 Plus CE Graphing Calculator (Rose Gold)",
-    category: "Calculators & Books",
-    description: "Left my Texas Instruments TI-84 Plus CE Rose Gold graphing calculator in Science Hall Lecture Room 101 after Calculus III exam. Has a chemistry sticker on the slide cover.",
-    location: "Science & Tech Hall, Lecture Room 101",
-    image: "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?auto=format&fit=crop&w=800&q=80",
-    name: "Maya Patel",
-    contact: "mpatel@campus.edu",
-  },
-  {
-    label: "Dorm & Car Keys (Lost)",
-    type: "lost" as ReportType,
-    title: "Dorm Key Set & Toyota Car Key with Stitch Plush",
-    category: "Dorm & Car Keys",
-    description: "North Quad dorm room key, mail key, and Toyota key fob on a split ring with a small blue Disney Stitch plush keychain. Lost near the Engineering Quad walkway.",
-    location: "Engineering Quad Walkway near North Quad",
-    image: "https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=800&q=80",
-    name: "Chloe Miller",
-    contact: "chloe.m@campus.edu",
-  },
-];
-
 function SubmitFormContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ReportType) || "lost";
@@ -133,20 +97,6 @@ function SubmitFormContent() {
       setImageBase64(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
-
-  const applyPreset = (preset: typeof PRESETS[0]) => {
-    setType(preset.type);
-    setTitle(preset.title);
-    setCategory(preset.category);
-    setDescription(preset.description);
-    setLocation(preset.location);
-    setImageUrl(preset.image);
-    setImageBase64(null);
-    setContactName(preset.name);
-    setContactInfo(preset.contact);
-    setExtractedAttributes(null);
-    setCreatedReportId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -395,21 +345,6 @@ function SubmitFormContent() {
                 Admin
               </span>
             )}
-          </div>
-
-          {/* Quick Presets for Demo / Testing */}
-          <div className="p-4 rounded-2xl bg-[#FFE2E2]/60 border border-[#F5CBCB] flex flex-wrap items-center gap-3 shadow-sm">
-            <span className="text-xs font-bold text-plum-800">Quick Test Presets:</span>
-            {PRESETS.map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={() => applyPreset(preset)}
-                className="text-xs px-3 py-1.5 rounded-lg bg-[#FBEFEF] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] shadow-sm transition font-semibold"
-              >
-                ⚡ {preset.label}
-              </button>
-            ))}
           </div>
 
           {/* Success Modal / Banner */}
