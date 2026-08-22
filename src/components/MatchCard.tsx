@@ -38,7 +38,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   const [isClaimed, setIsClaimed] = useState(candidate.report.status === "resolved");
 
   const evalData = candidate.gemini_evaluation;
-  const score = candidate.final_score;
+  const score = candidate.final_score ?? Math.round((candidate.vector_similarity ?? 0) * 100);
   const scoreStyle = getScoreColor(score);
   const isCandidateFound = candidate.report.type === "found";
 
@@ -57,7 +57,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         reportId={candidate.report.id}
         reportTitle={candidate.report.title}
         sourceReportId={sourceReport.id}
-        reporterEmail={candidate.report.reporter_email}
+        reporterCampusId={candidate.report.reporter_campus_id}
         onSuccess={handleClaimSuccess}
       />
 
@@ -81,7 +81,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             </div>
 
             <span className="text-xs text-slate-400">
-              Vector Similarity: {Math.round(candidate.vector_similarity * 100)}%
+              Vector Similarity: {Math.round((candidate.vector_similarity ?? 0) * 100)}%
             </span>
           </div>
 

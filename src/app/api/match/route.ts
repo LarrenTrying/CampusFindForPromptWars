@@ -149,7 +149,7 @@ async function handleMatchProcess(reportId: string) {
   );
 
   // Sort by final score descending
-  matchCandidates.sort((a, b) => b.final_score - a.final_score);
+  matchCandidates.sort((a, b) => (b.final_score ?? 0) - (a.final_score ?? 0));
 
   const response: MatchResponse = {
     source_report: sourceReport,

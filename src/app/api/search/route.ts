@@ -107,15 +107,16 @@ export async function GET(request: NextRequest) {
 function generateSearchMatchSnippet(query: string, report: Report): string {
   const qTokens = query.toLowerCase().split(/\W+/).filter((t) => t.length > 2);
   const matches: string[] = [];
+  const attrs = report.attributes;
 
-  if (report.attributes?.brand && qTokens.some((t) => report.attributes.brand?.toLowerCase().includes(t))) {
-    matches.push(`Brand: ${report.attributes.brand}`);
+  if (attrs?.brand && qTokens.some((t) => attrs.brand?.toLowerCase().includes(t))) {
+    matches.push(`Brand: ${attrs.brand}`);
   }
-  if (report.attributes?.primary_color && qTokens.some((t) => report.attributes.primary_color?.toLowerCase().includes(t))) {
-    matches.push(`Color: ${report.attributes.primary_color}`);
+  if (attrs?.primary_color && qTokens.some((t) => attrs.primary_color?.toLowerCase().includes(t))) {
+    matches.push(`Color: ${attrs.primary_color}`);
   }
-  if (report.attributes?.identifying_marks?.length) {
-    const markMatch = report.attributes.identifying_marks.find((m) =>
+  if (attrs?.identifying_marks?.length) {
+    const markMatch = attrs.identifying_marks.find((m) =>
       qTokens.some((t) => m.toLowerCase().includes(t))
     );
     if (markMatch) matches.push(`Mark: ${markMatch}`);

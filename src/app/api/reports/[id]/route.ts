@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase, isServerSupabaseConfigured } from "@/lib/supabase/server";
 import { MockDb } from "@/lib/db/mockDb";
-
-const ADMIN_EMAILS = [
-  "campusadmin@gmail.com",
-  "admin@campus.edu",
-  "admin@gmail.com",
-  "lostandfound@campus.edu",
-  "admin",
-  "campusadmin",
-];
+import { UserStore, ADMIN_ID, ADMIN_PASSWORD } from "@/lib/auth/userStore";
 
 export async function GET(
   request: NextRequest,
@@ -58,8 +50,8 @@ export async function PATCH(
     const id = params.id;
     const body = await request.json();
     const status = body.status;
-    const userEmail = (body.email || body.reporter_email || body.campus_id || "").toString().trim().toLowerCase();
-    const passkey = (body.passkey || body.pin || "").toString().trim().toLowerCase();
+    const campusId = (body.campus_id || body.reporter_campus_id || "").toString().trim();
+    const password = (body.password || body.pin || body.passkey || "").toString().trim();
 
     if (!["active", "matched", "resolved"].includes(status)) {
       return NextResponse.json(
@@ -85,39 +77,26 @@ export async function PATCH(
       );
     }
 
-    // 2. Authorization Verification
-    // Condition A: Campus Admin Email or Admin Key
-    const isAdmin =
-      ADMIN_EMAILS.some((adm) => userEmail && userEmail.includes(adm)) ||
-      ADMIN_EMAILS.some((adm) => passkey && passkey.includes(adm)) ||
-      userEmail === "43554" ||
-      passkey === "43554";
+    // 2. Authorize via UserStore
+    const verification = UserStore.verifyForResolution(
+      campusId,
+      password,
+      currentReport.reporter_campus_id
+    );
 
-    // Condition B: Reporter Google Mail / Contact match
-    const reporterEmail = (currentReport.reporter_email || currentReport.contact_info || "").toLowerCase();
-    const isReporterMatch =
-      userEmail &&
-      (reporterEmail.includes(userEmail) || userEmail.includes(reporterEmail.split("@")[0]));
-
-    const isAuthorized = isAdmin || isReporterMatch;
-
-    if (!isAuthorized) {
+    if (!verification.authorized) {
       return NextResponse.json(
         {
           success: false,
-          error: `Unauthorized: This report can only be resolved by the original owner (${
-            currentReport.reporter_email || currentReport.contact_info || "Original Reporter"
-          }) or the Campus Administrator.`,
+          error: verification.error || "Unauthorized to resolve this report.",
         },
         { status: 403 }
       );
     }
 
-    // 3. Update status in Database
-    const authorizedBy = isAdmin
-      ? "Campus Administrator"
-      : `Verified Reporter (${userEmail || "Google Account"})`;
+    const authorizedBy = verification.authorizedBy || "Verified Authority";
 
+    // 3. Update status in Database
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
       if (supabase) {

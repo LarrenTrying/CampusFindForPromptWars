@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth, ADMIN_EMAILS } from "@/context/AuthContext";
-import { Lock, ShieldCheck, CheckCircle2, AlertCircle, Mail, User, X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Lock, ShieldCheck, CheckCircle2, AlertCircle, KeyRound, Hash, X } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface ClaimModalProps {
@@ -11,7 +11,7 @@ interface ClaimModalProps {
   reportId: string;
   reportTitle: string;
   sourceReportId?: string;
-  reporterEmail?: string;
+  reporterCampusId?: string;
   onSuccess: () => void;
 }
 
@@ -21,30 +21,34 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
   reportId,
   reportTitle,
   sourceReportId,
-  reporterEmail,
+  reporterCampusId,
   onSuccess,
 }) => {
-  const { user, isAdmin } = useAuth();
-  const [emailInput, setEmailInput] = useState(user?.email || "");
+  const { user } = useAuth();
+  const [campusIdInput, setCampusIdInput] = useState(user?.campus_id || "");
+  const [passwordInput, setPasswordInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
   const [authorizedBy, setAuthorizedBy] = useState("");
 
   useEffect(() => {
-    if (user?.email) {
-      setEmailInput(user.email);
+    if (user?.campus_id) {
+      setCampusIdInput(user.campus_id);
     }
   }, [user, isOpen]);
 
   if (!isOpen) return null;
 
-  const isCurrentAdmin = user?.is_admin || isAdmin;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailInput) {
-      setErrorMsg("Please enter your Google Mail address to verify ownership.");
+    if (!/^\d{5}$/.test(campusIdInput.trim())) {
+      setErrorMsg("Please enter a valid 5-digit campus ID.");
+      return;
+    }
+
+    if (!passwordInput.trim()) {
+      setErrorMsg("Please enter the password for this ID.");
       return;
     }
 
@@ -58,7 +62,8 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: "resolved",
-          email: emailInput.trim(),
+          campus_id: campusIdInput.trim(),
+          password: passwordInput.trim(),
         }),
       });
 
@@ -74,7 +79,8 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             status: "resolved",
-            email: emailInput.trim(),
+            campus_id: campusIdInput.trim(),
+            password: passwordInput.trim(),
           }),
         });
       }
@@ -93,7 +99,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
         onClose();
       }, 1800);
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid Google account or unauthorized.");
+      setErrorMsg(err.message || "Invalid campus ID or password.");
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +124,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
               Authorize Claim & Resolution
             </h3>
             <p className="text-xs text-slate-400">
-              Requires Google Mail verification of the reporter or campus administrator.
+              Only the reporter who posted this item or Campus Admin can resolve this case.
             </p>
           </div>
         </div>
@@ -129,9 +135,9 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
             <span className="text-slate-500 block text-[10px] uppercase font-semibold">Item</span>
             <span className="font-semibold text-slate-200 line-clamp-1">{reportTitle}</span>
           </div>
-          {reporterEmail && (
-            <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 max-w-[150px] truncate">
-              {reporterEmail}
+          {reporterCampusId && (
+            <span className="text-[10px] font-mono font-bold bg-slate-800 text-indigo-300 px-2 py-0.5 rounded border border-slate-700">
+              Reporter ID #{reporterCampusId}
             </span>
           )}
         </div>
@@ -146,40 +152,37 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Google Mail Input */}
+            {/* 5-Digit Campus ID */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Google Mail Account</span>
-                </label>
-                {isCurrentAdmin && (
-                  <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" />
-                    Admin Account
-                  </span>
-                )}
-              </div>
+              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <Hash className="w-3.5 h-3.5 text-indigo-400" />
+                <span>5-Digit Campus ID</span>
+              </label>
               <input
-                type="email"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="e.g. your.email@gmail.com"
+                type="text"
+                maxLength={5}
+                value={campusIdInput}
+                onChange={(e) => setCampusIdInput(e.target.value.replace(/\D/g, ""))}
+                placeholder="e.g. 90421"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
               />
             </div>
 
-            {/* Quick Demo Hint */}
-            <div className="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-center justify-between">
-              <span>Admin account for evaluation:</span>
-              <button
-                type="button"
-                onClick={() => setEmailInput("campusadmin@gmail.com")}
-                className="bg-indigo-900/70 hover:bg-indigo-900 px-2 py-0.5 rounded text-indigo-200 font-mono font-bold text-[11px] border border-indigo-500/30 transition"
-              >
-                campusadmin@gmail.com
-              </button>
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Password</span>
+              </label>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter password for this ID"
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              />
             </div>
 
             {errorMsg && (
@@ -195,7 +198,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
               className="w-full py-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>{submitting ? "Verifying Google Account..." : "Verify & Resolve Case"}</span>
+              <span>{submitting ? "Verifying Credentials..." : "Verify & Resolve Case"}</span>
             </button>
           </form>
         )}

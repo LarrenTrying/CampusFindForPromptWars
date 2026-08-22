@@ -127,22 +127,20 @@ export const ReportCard: React.FC<ReportCardProps> = ({
           )}
         </div>
 
-        {/* Metadata: Location, Time & Reporter Account */}
+        {/* Metadata: Location, Time & Reporter ID */}
         <div className="pt-3 border-t border-slate-800/80 space-y-1.5 text-xs text-slate-400">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 truncate">
               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="truncate">{report.location}</span>
             </div>
-            {(report.reporter_email || report.reporter_campus_id) && (
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded shrink-0 max-w-[130px] truncate ${
-                (report.reporter_email && report.reporter_email.includes("admin")) || report.reporter_campus_id === "43554"
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold"
+            {report.reporter_campus_id && (
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded shrink-0 ${
+                report.reporter_campus_id === "43554"
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                   : "bg-slate-800 text-indigo-300 border border-slate-700"
               }`}>
-                {(report.reporter_email && report.reporter_email.includes("admin")) || report.reporter_campus_id === "43554"
-                  ? "Admin"
-                  : (report.reporter_email || `ID #${report.reporter_campus_id}`)}
+                {report.reporter_campus_id === "43554" ? "Admin" : `ID #${report.reporter_campus_id}`}
               </span>
             )}
           </div>

@@ -110,7 +110,7 @@ export default function ReportDetailPage() {
         onClose={() => setIsClaimModalOpen(false)}
         reportId={report.id}
         reportTitle={report.title}
-        reporterEmail={report.reporter_email}
+        reporterCampusId={report.reporter_campus_id}
         onSuccess={() => fetchReportAndMatches()}
       />
 

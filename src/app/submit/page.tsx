@@ -16,9 +16,9 @@ import {
   AlertCircle,
   RefreshCw,
   ArrowRight,
-  Lock,
   ShieldCheck,
-  Mail
+  KeyRound,
+  Hash
 } from "lucide-react";
 
 const CATEGORIES: ItemCategory[] = [
@@ -43,7 +43,7 @@ const PRESETS = [
     location: "Main Campus Library, 2nd Floor Study Area",
     image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     name: "Sarah Lin",
-    contact: "sarah.lin@gmail.com | (555) 234-5678",
+    contact: "sarah.lin@campus.edu | (555) 234-5678",
   },
   {
     label: "TI-84 Calculator (Lost)",
@@ -54,7 +54,7 @@ const PRESETS = [
     location: "Science & Tech Hall, Lecture Room 101",
     image: "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?auto=format&fit=crop&w=800&q=80",
     name: "Maya Patel",
-    contact: "mpatel@gmail.com",
+    contact: "mpatel@campus.edu",
   },
   {
     label: "Dorm & Car Keys (Lost)",
@@ -65,14 +65,14 @@ const PRESETS = [
     location: "Engineering Quad Walkway near North Quad",
     image: "https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=800&q=80",
     name: "Chloe Miller",
-    contact: "chloe.m@gmail.com",
+    contact: "chloe.m@campus.edu",
   },
 ];
 
 function SubmitFormContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ReportType) || "lost";
-  const { user, loginWithGoogle, loginWithCustomEmail, isAdmin } = useAuth();
+  const { user, login, isAdmin } = useAuth();
 
   const [type, setType] = useState<ReportType>(initialType);
   const [title, setTitle] = useState("");
@@ -83,45 +83,41 @@ function SubmitFormContent() {
     new Date().toISOString().slice(0, 16)
   );
   const [contactName, setContactName] = useState(user?.name || "");
-  const [contactInfo, setContactInfo] = useState(user?.email || "");
+  const [contactInfo, setContactInfo] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
-  const [googleEmailInput, setGoogleEmailInput] = useState("");
-  const [googleNameInput, setGoogleNameInput] = useState("");
-  const [googleLoggingIn, setGoogleLoggingIn] = useState(false);
-  const [googleOAuthError, setGoogleOAuthError] = useState("");
+  // Inline login gate state
+  const [gateCampusId, setGateCampusId] = useState("");
+  const [gatePassword, setGatePassword] = useState("");
+  const [gateName, setGateName] = useState("");
+  const [gateLoading, setGateLoading] = useState(false);
+  const [gateError, setGateError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [extractedAttributes, setExtractedAttributes] = useState<ReportAttributes | null>(null);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
-  const [createdReportEmail, setCreatedReportEmail] = useState<string | null>(null);
+  const [createdReportCampusId, setCreatedReportCampusId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleRealGoogleOAuth = async () => {
-    setGoogleLoggingIn(true);
-    setGoogleOAuthError("");
-    try {
-      await loginWithGoogle();
-    } catch (err: any) {
-      console.warn("Google OAuth popup notice:", err.message);
-      setGoogleOAuthError(
-        err.message?.includes("provider is not enabled")
-          ? "Google OAuth is not yet enabled in your Supabase project dashboard. You can enable it under Auth > Providers > Google, or sign in below with your Google email."
-          : (err.message || "Failed to initialize Google Sign-In.")
-      );
-    } finally {
-      setGoogleLoggingIn(false);
+  useEffect(() => {
+    if (user) {
+      if (user.name) setContactName(user.name);
     }
-  };
+  }, [user]);
 
-  const handleCustomEmailSubmit = async (overrideEmail?: string, overrideName?: string) => {
-    setGoogleLoggingIn(true);
+  const handleGateLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateError("");
+    setGateLoading(true);
     try {
-      await loginWithCustomEmail(overrideEmail || googleEmailInput, overrideName || googleNameInput);
+      const res = await login(gateCampusId, gatePassword, gateName);
+      if (!res.success) {
+        setGateError(res.error || "Login failed.");
+      }
     } finally {
-      setGoogleLoggingIn(false);
+      setGateLoading(false);
     }
   };
 
@@ -153,7 +149,7 @@ function SubmitFormContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      setErrorMsg("You must be signed in with your Google Mail account to submit a report.");
+      setErrorMsg("You must be logged in with your 5-digit campus ID to submit a report.");
       return;
     }
 
@@ -177,8 +173,8 @@ function SubmitFormContent() {
         location,
         date_time: new Date(dateTime).toISOString(),
         contact_name: contactName,
-        contact_info: contactInfo || user.email,
-        reporter_email: user.email,
+        contact_info: contactInfo || `Campus ID #${user.campus_id}`,
+        reporter_campus_id: user.campus_id,
       };
 
       const res = await fetch("/api/reports", {
@@ -194,7 +190,7 @@ function SubmitFormContent() {
 
       setExtractedAttributes(data.report.attributes);
       setCreatedReportId(data.report.id);
-      setCreatedReportEmail(user.email);
+      setCreatedReportCampusId(user.campus_id);
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during report submission.");
     } finally {
@@ -219,126 +215,100 @@ function SubmitFormContent() {
         </p>
       </div>
 
-      {/* Mandatory Google Authentication Gate if Not Signed In */}
+      {/* Mandatory Authentication Gate if Not Signed In */}
       {!user ? (
         <div className="glass-panel rounded-3xl p-8 border border-indigo-500/30 bg-slate-900/90 shadow-2xl space-y-6 animate-fadeIn">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md">
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center shadow-md shrink-0">
+              <KeyRound className="w-6 h-6 text-indigo-400" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
-                Google Mail Authentication Required
+                Campus Authentication Required
               </h2>
               <p className="text-xs text-slate-300">
-                Please sign in with your <strong className="text-indigo-300">Google Mail</strong> account to submit and track your report.
+                Please sign in with your <strong className="text-indigo-300">5-digit campus ID</strong> and password to submit and manage reports.
               </p>
             </div>
           </div>
 
-          <div className="space-y-4 max-w-md">
-            {/* Primary Continue with Google Button */}
-            <button
-              type="button"
-              onClick={handleRealGoogleOAuth}
-              disabled={googleLoggingIn}
-              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm shadow-xl flex items-center justify-center gap-3 transition active:scale-98"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-              <span>{googleLoggingIn ? "Redirecting to Google..." : "Continue with Google (accounts.google.com)"}</span>
-            </button>
+          <form onSubmit={handleGateLogin} className="space-y-4 max-w-md">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <Hash className="w-3.5 h-3.5 text-indigo-400" />
+                <span>5-Digit Campus ID</span>
+              </label>
+              <input
+                type="text"
+                maxLength={5}
+                value={gateCampusId}
+                onChange={(e) => setGateCampusId(e.target.value.replace(/\D/g, ""))}
+                placeholder="e.g. 90421"
+                required
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono tracking-wider text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
 
-            {googleOAuthError && (
-              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs">
-                {googleOAuthError}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Password</span>
+              </label>
+              <input
+                type="password"
+                value={gatePassword}
+                onChange={(e) => setGatePassword(e.target.value)}
+                placeholder="Enter password"
+                required
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Full Name (Optional for first-time login)</span>
+              </label>
+              <input
+                type="text"
+                value={gateName}
+                onChange={(e) => setGateName(e.target.value)}
+                placeholder="e.g. Sarah Lin"
+                className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {gateError && (
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{gateError}</span>
               </div>
             )}
 
-            <div className="flex items-center gap-2 pt-1">
-              <div className="flex-1 h-[1px] bg-slate-800" />
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Or Enter Gmail</span>
-              <div className="flex-1 h-[1px] bg-slate-800" />
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (googleEmailInput) handleCustomEmailSubmit(googleEmailInput, googleNameInput);
-              }}
-              className="space-y-3"
+            <button
+              type="submit"
+              disabled={gateLoading}
+              className="w-full py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <input
-                type="email"
-                value={googleEmailInput}
-                onChange={(e) => setGoogleEmailInput(e.target.value)}
-                placeholder="your.email@gmail.com"
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition active:scale-98"
-              >
-                Sign In & Unlock Form
-              </button>
-            </form>
-          </div>
+              <ShieldCheck className="w-4 h-4" />
+              <span>{gateLoading ? "Authenticating..." : "Sign In & Unlock Report Form"}</span>
+            </button>
+          </form>
         </div>
       ) : (
         <>
           {/* User Status Banner */}
           <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-3">
-              {user.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full border border-indigo-400"
-                />
-              ) : (
-                <User className="w-6 h-6 text-indigo-400 shrink-0" />
-              )}
+              <div className="w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center font-mono font-bold text-indigo-300 text-sm">
+                #
+              </div>
               <div>
                 <span className="font-bold text-white block">
-                  Signed in as {user.name} ({user.email})
+                  Signed in as {user.name} (Campus ID #{user.campus_id})
                 </span>
                 <span className="text-slate-400">
-                  This report will be tied to your Google account. Only you (or Campus Admin) can resolve it.
+                  This report will be tied to ID #{user.campus_id}. Only you (or Campus Admin) can resolve it.
                 </span>
               </div>
             </div>
@@ -378,7 +348,7 @@ function SubmitFormContent() {
                       Report Created & Embedded in Supabase pgvector!
                     </h3>
                     <p className="text-xs text-slate-300">
-                      Tied to Google Account: <strong className="text-indigo-300">{createdReportEmail}</strong>.
+                      Tied to Campus ID: <strong className="text-indigo-300 font-mono">#{createdReportCampusId}</strong>.
                     </p>
                   </div>
                 </div>
@@ -666,14 +636,13 @@ function SubmitFormContent() {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold text-slate-300">
-                    Google Mail / Phone Contact <span className="text-rose-400">*</span>
+                    Email / Phone Contact (Optional)
                   </label>
                   <input
                     type="text"
                     value={contactInfo}
                     onChange={(e) => setContactInfo(e.target.value)}
-                    placeholder="e.g. sarah.lin@gmail.com | 555-0192"
-                    required
+                    placeholder="e.g. sarah.lin@campus.edu | 555-0192"
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
                 </div>

@@ -98,11 +98,8 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     // 3. Generate 768-d embedding
     const embedding = await getEmbedding(embeddingText);
 
-    // Auto-generate 4-digit secret PIN if not provided
-    const secretPin = body.secret_pin || Math.floor(1000 + Math.random() * 9000).toString();
-
     // 4. Save to Supabase pgvector or MockDb
-    const userEmail = (body.reporter_email || body.contact_info || "student@gmail.com").toLowerCase();
+    const campusId = body.reporter_campus_id || "90421";
 
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
@@ -116,8 +113,8 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           location: body.location,
           date_time: body.date_time || new Date().toISOString(),
           contact_name: body.contact_name,
-          contact_info: body.contact_info || userEmail,
-          reporter_email: userEmail,
+          contact_info: body.contact_info,
+          reporter_campus_id: campusId,
           status: "active",
           attributes: {
             ...extractedAttributes,
@@ -136,7 +133,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           return NextResponse.json({
             success: true,
             report: data,
-            reporter_email: userEmail,
+            reporter_campus_id: campusId,
             source: "supabase",
           });
         }
@@ -148,7 +145,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     const newReport = MockDb.createReport(
       {
         ...body,
-        reporter_email: userEmail,
+        reporter_campus_id: campusId,
       },
       extractedAttributes,
       embedding
@@ -157,7 +154,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     return NextResponse.json({
       success: true,
       report: newReport,
-      reporter_email: userEmail,
+      reporter_campus_id: campusId,
       source: "mock_db",
     });
   } catch (error: any) {
