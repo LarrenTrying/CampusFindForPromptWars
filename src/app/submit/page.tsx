@@ -18,7 +18,9 @@ import {
   ArrowRight,
   ShieldCheck,
   KeyRound,
-  Hash
+  Hash,
+  Building2,
+  X
 } from "lucide-react";
 
 const CATEGORIES: ItemCategory[] = [
@@ -100,6 +102,7 @@ function SubmitFormContent() {
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [createdReportCampusId, setCreatedReportCampusId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showFoundDepositModal, setShowFoundDepositModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -191,6 +194,11 @@ function SubmitFormContent() {
       setExtractedAttributes(data.report.attributes);
       setCreatedReportId(data.report.id);
       setCreatedReportCampusId(user.campus_id);
+
+      // Trigger deposit popup for found item reports
+      if (type === "found") {
+        setShowFoundDepositModal(true);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during report submission.");
     } finally {
@@ -201,6 +209,75 @@ function SubmitFormContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
+      {/* Found Item Staff Room Deposit Pop-up Modal */}
+      {showFoundDepositModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+          <div className="glass-panel w-full max-w-md rounded-3xl border-2 border-emerald-500/50 bg-slate-900/95 shadow-2xl p-6 sm:p-8 space-y-6 relative animate-scaleIn">
+            <button
+              onClick={() => setShowFoundDepositModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Icon & Title */}
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <Building2 className="w-8 h-8 text-emerald-400" />
+              </div>
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30">
+                  Action Required: Custody Handover
+                </span>
+                <h2 className="text-xl font-extrabold text-white mt-2">
+                  Please Deposit Found Item
+                </h2>
+              </div>
+            </div>
+
+            {/* Prominent Location Box */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-indigo-950/70 border border-emerald-500/40 text-center space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase text-slate-400">Designated Drop-Off Location:</span>
+              <div className="text-xl font-black text-emerald-300 flex items-center justify-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>2nd Floor Staff Room</span>
+              </div>
+            </div>
+
+            {/* Message Description */}
+            <p className="text-xs text-slate-300 text-center leading-relaxed">
+              Thank you for turning in a found item! To ensure safe custody and allow the owner to safely verify and claim their property, please deliver this item to duty staff at the <strong className="text-white font-semibold">2nd Floor Staff Room</strong> as soon as possible.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => setShowFoundDepositModal(false)}
+                className="w-full py-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition active:scale-98 flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>I Understand & Will Deposit Item</span>
+              </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="/"
+                  className="py-2.5 rounded-xl text-xs font-semibold text-center bg-slate-950 hover:bg-slate-850 text-slate-300 border border-slate-800 transition block"
+                >
+                  View in Main Feed
+                </a>
+                <a
+                  href={`/match?reportId=${createdReportId}`}
+                  className="py-2.5 rounded-xl text-xs font-bold text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition block"
+                >
+                  Check AI Matches
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">
