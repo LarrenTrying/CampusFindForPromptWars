@@ -1,86 +1,90 @@
--- Supabase PostgreSQL Schema with pgvector for Lost & Found System
+-- ==============================================================================
+-- CAMPUSFIND: Supabase PostgreSQL Schema with pgvector
 -- Run this in your Supabase SQL Editor (https://app.supabase.com -> SQL Editor)
+-- ==============================================================================
 
 -- 1. Enable the pgvector extension to work with embedding vectors
-create extension if not exists vector;
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- 2. Create the reports table
-create table if not exists public.reports (
-  id uuid primary key default gen_random_uuid(),
-  type text not null check (type in ('lost', 'found')),
-  title text not null,
-  description text not null,
-  category text not null default 'Other',
-  image_url text,
-  location text not null,
-  date_time timestamptz not null default now(),
-  contact_name text not null,
-  contact_info text not null,
-  reporter_campus_id text default '90421',
-  status text not null default 'active' check (status in ('active', 'matched', 'resolved')),
-  attributes jsonb not null default '{}'::jsonb,
-  -- 768 dimensions matches Google Gemini text-embedding-004
-  embedding vector(768),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS public.reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL CHECK (type IN ('lost', 'found')),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'Other',
+  image_url TEXT,
+  location TEXT NOT NULL,
+  date_time TIMESTAMPTZ NOT NULL DEFAULT now(),
+  contact_name TEXT NOT NULL,
+  contact_info TEXT NOT NULL,
+  reporter_campus_id TEXT DEFAULT '90421',
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'matched', 'resolved')),
+  attributes JSONB NOT NULL DEFAULT '{}'::jsonb,
+  embedding VECTOR(768),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Ensure reporter_campus_id column exists if table was already created earlier
-alter table public.reports add column if not exists reporter_campus_id text;
+-- Ensure reporter_campus_id column exists if table was already created
+ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS reporter_campus_id TEXT;
 
--- 3. Create an HNSW index for ultra-fast cosine similarity search
-create index if not exists reports_embedding_hnsw_idx 
-on public.reports 
-using hnsw (embedding vector_cosine_ops);
+-- 3. Create HNSW index for ultra-fast cosine similarity search
+CREATE INDEX IF NOT EXISTS reports_embedding_hnsw_idx 
+ON public.reports 
+USING hnsw (embedding vector_cosine_ops);
 
 -- 4. Enable Row Level Security (RLS)
-alter table public.reports enable row level security;
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 
--- Allow public read access to active and resolved reports
-create policy "Allow public read access"
-  on public.reports for select
-  using (true);
+-- Clean recreate policies to prevent duplicate errors
+DROP POLICY IF EXISTS "Allow public read access" ON public.reports;
+CREATE POLICY "Allow public read access"
+  ON public.reports FOR SELECT
+  USING (true);
 
--- Allow public insert access
-create policy "Allow public insert access"
-  on public.reports for insert
-  with check (true);
+DROP POLICY IF EXISTS "Allow public insert access" ON public.reports;
+CREATE POLICY "Allow public insert access"
+  ON public.reports FOR INSERT
+  WITH CHECK (true);
 
--- Allow public update access (for status updates, resolution, etc.)
-create policy "Allow public update access"
-  on public.reports for update
-  using (true);
+DROP POLICY IF EXISTS "Allow public update access" ON public.reports;
+CREATE POLICY "Allow public update access"
+  ON public.reports FOR UPDATE
+  USING (true);
 
 -- 5. RPC Function: match_opposite_reports
--- Finds nearest-neighbor reports of the opposite type (lost <-> found) using cosine similarity (<=>)
-create or replace function match_opposite_reports (
-  query_embedding vector(768),
-  target_type text,
-  match_threshold float default 0.25,
-  match_count int default 8
+-- Finds nearest-neighbor reports of the opposite type (lost <-> found)
+DROP FUNCTION IF EXISTS match_opposite_reports(vector, text, float, int);
+
+CREATE OR REPLACE FUNCTION match_opposite_reports (
+  query_embedding VECTOR(768),
+  target_type TEXT,
+  match_threshold FLOAT DEFAULT 0.05,
+  match_count INT DEFAULT 8
 )
-returns table (
-  id uuid,
-  type text,
-  title text,
-  description text,
-  category text,
-  image_url text,
-  location text,
-  date_time timestamptz,
-  contact_name text,
-  contact_info text,
-  reporter_campus_id text,
-  status text,
-  attributes jsonb,
-  similarity float,
-  created_at timestamptz
+RETURNS TABLE (
+  id UUID,
+  type TEXT,
+  title TEXT,
+  description TEXT,
+  category TEXT,
+  image_url TEXT,
+  location TEXT,
+  date_time TIMESTAMPTZ,
+  contact_name TEXT,
+  contact_info TEXT,
+  reporter_campus_id TEXT,
+  status TEXT,
+  attributes JSONB,
+  similarity FLOAT,
+  created_at TIMESTAMPTZ
 )
-language plpgsql
-as $$
-begin
-  return query
-  select
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
     r.id,
     r.type,
     r.title,
@@ -94,49 +98,51 @@ begin
     r.reporter_campus_id,
     r.status,
     r.attributes,
-    1 - (r.embedding <=> query_embedding) as similarity,
+    (1 - (r.embedding <=> query_embedding))::FLOAT AS similarity,
     r.created_at
-  from public.reports r
-  where r.type = target_type
-    and r.status = 'active'
-    and r.embedding is not null
-    and (1 - (r.embedding <=> query_embedding)) >= match_threshold
-  order by r.embedding <=> query_embedding
-  limit match_count;
-end;
+  FROM public.reports r
+  WHERE r.type = target_type
+    AND r.status = 'active'
+    AND r.embedding IS NOT NULL
+    AND (1 - (r.embedding <=> query_embedding)) >= match_threshold
+  ORDER BY r.embedding <=> query_embedding
+  LIMIT match_count;
+END;
 $$;
 
 -- 6. RPC Function: search_reports
 -- General semantic search across reports with optional type filtering
-create or replace function search_reports (
-  query_embedding vector(768),
-  filter_type text default null,
-  filter_category text default null,
-  match_threshold float default 0.2,
-  match_count int default 12
+DROP FUNCTION IF EXISTS search_reports(vector, text, text, float, int);
+
+CREATE OR REPLACE FUNCTION search_reports (
+  query_embedding VECTOR(768),
+  filter_type TEXT DEFAULT NULL,
+  filter_category TEXT DEFAULT NULL,
+  match_threshold FLOAT DEFAULT 0.05,
+  match_count INT DEFAULT 12
 )
-returns table (
-  id uuid,
-  type text,
-  title text,
-  description text,
-  category text,
-  image_url text,
-  location text,
-  date_time timestamptz,
-  contact_name text,
-  contact_info text,
-  reporter_campus_id text,
-  status text,
-  attributes jsonb,
-  similarity float,
-  created_at timestamptz
+RETURNS TABLE (
+  id UUID,
+  type TEXT,
+  title TEXT,
+  description TEXT,
+  category TEXT,
+  image_url TEXT,
+  location TEXT,
+  date_time TIMESTAMPTZ,
+  contact_name TEXT,
+  contact_info TEXT,
+  reporter_campus_id TEXT,
+  status TEXT,
+  attributes JSONB,
+  similarity FLOAT,
+  created_at TIMESTAMPTZ
 )
-language plpgsql
-as $$
-begin
-  return query
-  select
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
     r.id,
     r.type,
     r.title,
@@ -150,27 +156,29 @@ begin
     r.reporter_campus_id,
     r.status,
     r.attributes,
-    1 - (r.embedding <=> query_embedding) as similarity,
+    (1 - (r.embedding <=> query_embedding))::FLOAT AS similarity,
     r.created_at
-  from public.reports r
-  where (filter_type is null or r.type = filter_type)
-    and (filter_category is null or filter_category = 'All' or r.category = filter_category)
-    and r.embedding is not null
-    and (1 - (r.embedding <=> query_embedding)) >= match_threshold
-  order by r.embedding <=> query_embedding
-  limit match_count;
-end;
+  FROM public.reports r
+  WHERE (filter_type IS NULL OR filter_type = 'all' OR r.type = filter_type)
+    AND (filter_category IS NULL OR filter_category = 'All' OR r.category = filter_category)
+    AND r.embedding IS NOT NULL
+    AND (1 - (r.embedding <=> query_embedding)) >= match_threshold
+  ORDER BY r.embedding <=> query_embedding
+  LIMIT match_count;
+END;
 $$;
 
--- 7. Create Supabase Storage Bucket for item photos (optional, fallback to base64/url supported)
-insert into storage.buckets (id, name, public)
-values ('report-images', 'report-images', true)
-on conflict (id) do nothing;
+-- 7. Storage Bucket for item photos (optional)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('report-images', 'report-images', true)
+ON CONFLICT (id) DO NOTHING;
 
-create policy "Allow public image uploads"
-  on storage.objects for insert
-  with check (bucket_id = 'report-images');
+DROP POLICY IF EXISTS "Allow public image uploads" ON storage.objects;
+CREATE POLICY "Allow public image uploads"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'report-images');
 
-create policy "Allow public image downloads"
-  on storage.objects for select
-  using (bucket_id = 'report-images');
+DROP POLICY IF EXISTS "Allow public image downloads" ON storage.objects;
+CREATE POLICY "Allow public image downloads"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'report-images');
