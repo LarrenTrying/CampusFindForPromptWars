@@ -40,6 +40,30 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<MainTab>("active_all");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [stats, setStats] = useState({
+    lost: 0,
+    found: 0,
+    resolved: 0,
+  });
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/reports?status=all", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.reports)) {
+        const all: Report[] = data.reports;
+        const lost = all.filter((r) => r.type === "lost" && r.status !== "resolved").length;
+        const found = all.filter((r) => r.type === "found" && r.status !== "resolved").length;
+        const resolved = all.filter((r) => r.status === "resolved").length;
+        setStats({ lost, found, resolved });
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+    }
+  };
 
   const fetchReports = async () => {
     setLoading(true);
@@ -78,6 +102,10 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
     fetchReports();
   }, [activeTab, categoryFilter]);
 
@@ -91,6 +119,7 @@ export default function HomePage() {
     try {
       await fetch("/api/seed", { method: "POST" });
       await fetchReports();
+      await fetchStats();
     } catch (e) {
       console.error(e);
       setLoading(false);
@@ -149,38 +178,52 @@ export default function HomePage() {
         </div>
 
         {/* Live System Stats Bar */}
-        <div className="mt-10 pt-6 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="mt-10 pt-6 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => setActiveTab("lost")}
-            className="p-3 rounded-xl bg-slate-900/50 hover:bg-slate-900/80 border border-slate-800 text-left transition"
+            className={`p-4 rounded-2xl border text-left transition ${
+              activeTab === "lost"
+                ? "bg-rose-950/40 border-rose-500/50 shadow-lg shadow-rose-950/20"
+                : "bg-slate-900/50 hover:bg-slate-900/80 border-slate-800"
+            }`}
           >
-            <div className="text-xs text-slate-400">Active Lost Reports</div>
-            <div className="text-2xl font-bold text-rose-400 mt-1">Live Feed</div>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Lost Reports</div>
+            <div className="text-3xl font-extrabold text-rose-400 mt-1 flex items-baseline gap-2">
+              <span>{stats.lost}</span>
+              <span className="text-xs font-medium text-slate-400 font-normal">items reported</span>
+            </div>
           </button>
+
           <button
             onClick={() => setActiveTab("found")}
-            className="p-3 rounded-xl bg-slate-900/50 hover:bg-slate-900/80 border border-slate-800 text-left transition"
+            className={`p-4 rounded-2xl border text-left transition ${
+              activeTab === "found"
+                ? "bg-emerald-950/40 border-emerald-500/50 shadow-lg shadow-emerald-950/20"
+                : "bg-slate-900/50 hover:bg-slate-900/80 border-slate-800"
+            }`}
           >
-            <div className="text-xs text-slate-400">Active Found Reports</div>
-            <div className="text-2xl font-bold text-emerald-400 mt-1">Live Feed</div>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Found Reports</div>
+            <div className="text-3xl font-extrabold text-emerald-400 mt-1 flex items-baseline gap-2">
+              <span>{stats.found}</span>
+              <span className="text-xs font-medium text-slate-400 font-normal">items turned in</span>
+            </div>
           </button>
+
           <button
             onClick={() => setActiveTab("resolved")}
-            className="p-3 rounded-xl bg-slate-900/50 hover:bg-slate-900/80 border border-slate-800 text-left transition"
+            className={`p-4 rounded-2xl border text-left transition ${
+              activeTab === "resolved"
+                ? "bg-indigo-950/40 border-indigo-500/50 shadow-lg shadow-indigo-950/20"
+                : "bg-slate-900/50 hover:bg-slate-900/80 border-slate-800"
+            }`}
           >
-            <div className="text-xs text-slate-400">Reunited Cases Archive</div>
-            <div className="text-2xl font-bold text-indigo-400 mt-1 flex items-center gap-1.5">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-              <span>Success</span>
+            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Reunited Cases Archive</div>
+            <div className="text-3xl font-extrabold text-indigo-300 mt-1 flex items-baseline gap-2">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 self-center" />
+              <span>{stats.resolved}</span>
+              <span className="text-xs font-medium text-slate-400 font-normal">cases solved</span>
             </div>
           </button>
-          <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800 flex flex-col justify-between">
-            <div className="text-xs text-slate-400">Vector Embeddings</div>
-            <div className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>768-d pgvector Active</span>
-            </div>
-          </div>
         </div>
       </div>
 
