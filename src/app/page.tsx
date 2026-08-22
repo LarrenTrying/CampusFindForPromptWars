@@ -117,25 +117,25 @@ export default function HomePage() {
   return (
     <div className="space-y-10">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950 p-8 sm:p-12 shadow-2xl">
-        <div className="absolute -right-20 -top-20 w-96 h-96 rounded-full bg-indigo-600/15 blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 w-96 h-96 rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl border border-[#F5CBCB] bg-gradient-to-b from-[#FFE2E2]/90 via-[#FBEFEF] to-[#FBEFEF] p-8 sm:p-12 shadow-xl">
+        <div className="absolute -right-20 -top-20 w-96 h-96 rounded-full bg-[#C5B3D3]/35 blur-3xl pointer-events-none" />
+        <div className="absolute -left-20 -bottom-20 w-96 h-96 rounded-full bg-[#F5CBCB]/40 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#C5B3D3]/40 text-plum-950 border border-[#C5B3D3]">
+            <Sparkles className="w-3.5 h-3.5 text-plum-900" />
             <span>Challenge: Smart Campus Lost & Found</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-plum-950 leading-tight">
             Smart Campus AI that{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-plum-950 via-[#744B7F] to-[#9174AA]">
               reunites lost items
             </span>{" "}
             even with vague descriptions
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
+          <p className="text-base sm:text-lg text-plum-800 leading-relaxed font-medium">
             Campus lost-and-found is often fragmented by incomplete details and differing wording. Our system uses Google Gemini multimodal vision + Supabase pgvector to automatically extract forensic attributes, score potential matches with confidence percentages, explain match reasons, and verify secure claims.
           </p>
 
@@ -143,42 +143,42 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <a
               href="/submit?type=lost"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition transform active:scale-95"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-[#d97c7c] hover:bg-[#c96c6c] text-white shadow-md shadow-rose-900/10 border border-[#e5adad] transition transform active:scale-95"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Report Lost Item</span>
             </a>
             <a
               href="/submit?type=found"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition transform active:scale-95"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-[#6ea17e] hover:bg-[#5e916e] text-white shadow-md shadow-emerald-900/10 border border-[#9ec0aa] transition transform active:scale-95"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Report Found Item</span>
             </a>
             <a
               href="/search"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 border border-[#ab92bf] shadow-sm transition"
             >
-              <Search className="w-4 h-4 text-slate-400" />
+              <Search className="w-4 h-4 text-plum-800" />
               <span>Semantic Search</span>
             </a>
           </div>
         </div>
 
         {/* Live System Stats Bar */}
-        <div className="mt-10 pt-6 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mt-10 pt-6 border-t border-[#F5CBCB] grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => setActiveTab("lost")}
             className={`p-4 rounded-2xl border text-left transition ${
               activeTab === "lost"
-                ? "bg-rose-950/40 border-rose-500/50 shadow-lg shadow-rose-950/20"
-                : "bg-slate-900/50 hover:bg-slate-900/80 border-slate-800"
+                ? "bg-[#FFE2E2] border-rose-400 shadow-md"
+                : "bg-[#FBEFEF]/80 hover:bg-[#FFE2E2] border-[#F5CBCB]"
             }`}
           >
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Lost Reports</div>
-            <div className="text-3xl font-extrabold text-rose-400 mt-1 flex items-baseline gap-2">
+            <div className="text-xs text-rose-800 font-bold uppercase tracking-wider">Active Lost Reports</div>
+            <div className="text-3xl font-black text-rose-700 mt-1 flex items-baseline gap-2">
               <span>{stats.lost}</span>
-              <span className="text-xs font-medium text-slate-400 font-normal">items reported</span>
+              <span className="text-xs font-semibold text-plum-700">items reported</span>
             </div>
           </button>
 
@@ -186,14 +186,14 @@ export default function HomePage() {
             onClick={() => setActiveTab("found")}
             className={`p-4 rounded-2xl border text-left transition ${
               activeTab === "found"
-                ? "bg-emerald-950/40 border-emerald-500/50 shadow-lg shadow-emerald-950/20"
-                : "bg-slate-900/50 hover:bg-slate-900/80 border-slate-800"
+                ? "bg-[#FFE2E2] border-emerald-400 shadow-md"
+                : "bg-[#FBEFEF]/80 hover:bg-[#FFE2E2] border-[#F5CBCB]"
             }`}
           >
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Found Reports</div>
-            <div className="text-3xl font-extrabold text-emerald-400 mt-1 flex items-baseline gap-2">
+            <div className="text-xs text-emerald-800 font-bold uppercase tracking-wider">Active Found Reports</div>
+            <div className="text-3xl font-black text-emerald-700 mt-1 flex items-baseline gap-2">
               <span>{stats.found}</span>
-              <span className="text-xs font-medium text-slate-400 font-normal">items turned in</span>
+              <span className="text-xs font-semibold text-plum-700">items turned in</span>
             </div>
           </button>
 
@@ -201,15 +201,15 @@ export default function HomePage() {
             onClick={() => setActiveTab("resolved")}
             className={`p-4 rounded-2xl border text-left transition ${
               activeTab === "resolved"
-                ? "bg-indigo-950/40 border-indigo-500/50 shadow-lg shadow-indigo-950/20"
-                : "bg-slate-900/50 hover:bg-slate-900/80 border-slate-800"
+                ? "bg-[#C5B3D3]/60 border-[#ab92bf] shadow-md"
+                : "bg-[#FBEFEF]/80 hover:bg-[#FFE2E2] border-[#F5CBCB]"
             }`}
           >
-            <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Reunited Cases Archive</div>
-            <div className="text-3xl font-extrabold text-indigo-300 mt-1 flex items-baseline gap-2">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400 self-center" />
+            <div className="text-xs text-plum-800 font-bold uppercase tracking-wider">Reunited Cases Archive</div>
+            <div className="text-3xl font-black text-plum-950 mt-1 flex items-baseline gap-2">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 self-center" />
               <span>{stats.resolved}</span>
-              <span className="text-xs font-medium text-slate-400 font-normal">cases solved</span>
+              <span className="text-xs font-semibold text-plum-700">cases solved</span>
             </div>
           </button>
         </div>
@@ -219,13 +219,13 @@ export default function HomePage() {
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           {/* Distinct Tab Bar */}
-          <div className="flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shrink-0 gap-1 overflow-x-auto">
+          <div className="flex items-center p-1.5 rounded-2xl bg-[#FFE2E2] border border-[#F5CBCB] shrink-0 gap-1 overflow-x-auto shadow-sm">
             <button
               onClick={() => setActiveTab("active_all")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                 activeTab === "active_all"
-                  ? "bg-slate-800 text-white shadow-md"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#C5B3D3] text-plum-950 border border-[#ab92bf] shadow-sm"
+                  : "text-plum-800 hover:text-plum-950 hover:bg-[#F5CBCB]/50"
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -236,11 +236,11 @@ export default function HomePage() {
               onClick={() => setActiveTab("lost")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                 activeTab === "lost"
-                  ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-md"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-rose-200 text-rose-900 border border-rose-400 shadow-sm"
+                  : "text-plum-800 hover:text-rose-800 hover:bg-[#F5CBCB]/50"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-rose-400" />
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
               <span>Lost Items</span>
             </button>
 
@@ -248,11 +248,11 @@ export default function HomePage() {
               onClick={() => setActiveTab("found")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                 activeTab === "found"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-md"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-emerald-200 text-emerald-900 border border-emerald-400 shadow-sm"
+                  : "text-plum-800 hover:text-emerald-800 hover:bg-[#F5CBCB]/50"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>Found Items</span>
             </button>
 
@@ -261,11 +261,11 @@ export default function HomePage() {
               onClick={() => setActiveTab("resolved")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                 activeTab === "resolved"
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "text-indigo-400 bg-indigo-950/40 hover:bg-indigo-900/50 border border-indigo-500/30"
+                  ? "bg-[#C5B3D3] text-plum-950 border border-[#ab92bf] shadow-sm"
+                  : "text-plum-800 bg-[#F5CBCB]/60 hover:bg-[#F5CBCB] border border-[#F5CBCB]"
               }`}
             >
-              <HeartHandshake className="w-4 h-4 text-emerald-300" />
+              <HeartHandshake className="w-4 h-4 text-emerald-700" />
               <span>🎉 Reunited & Resolved</span>
             </button>
           </div>
@@ -277,16 +277,16 @@ export default function HomePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter by keyword, color, brand, or location..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-xs text-plum-950 placeholder-plum-500 focus:outline-none focus:border-[#C5B3D3] shadow-sm font-medium"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+            <Search className="w-4 h-4 text-plum-600 absolute left-3.5 top-3" />
           </form>
 
           {/* Refresh Button */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => { fetchReports(); fetchStats(); }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 border border-slate-800 transition"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFE2E2] hover:bg-[#F5CBCB] text-xs font-bold text-plum-900 border border-[#F5CBCB] shadow-sm transition"
               title="Refresh Feed"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -301,10 +301,10 @@ export default function HomePage() {
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${
                 categoryFilter === cat
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25"
-                  : "bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800"
+                  ? "bg-[#C5B3D3] text-plum-950 border border-[#ab92bf] shadow-sm"
+                  : "bg-[#FFE2E2] text-plum-800 hover:bg-[#F5CBCB] border border-[#F5CBCB]"
               }`}
             >
               {cat}
@@ -315,10 +315,10 @@ export default function HomePage() {
 
       {/* Header for Resolved Tab */}
       {activeTab === "resolved" && (
-        <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/20 flex items-center gap-3 text-xs text-indigo-300">
-          <Award className="w-5 h-5 text-emerald-400 shrink-0" />
+        <div className="p-4 rounded-2xl bg-[#FFE2E2] border border-[#F5CBCB] flex items-center gap-3 text-xs text-plum-800 shadow-sm">
+          <Award className="w-5 h-5 text-emerald-600 shrink-0" />
           <div>
-            <span className="font-bold text-white block">Reunited Cases Archive</span>
+            <span className="font-bold text-plum-950 block text-sm">Reunited Cases Archive</span>
             These items have been verified by the owner or campus administrator and successfully returned. They are archived here and removed from active search.
           </div>
         </div>
@@ -330,19 +330,19 @@ export default function HomePage() {
           {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
             <div
               key={n}
-              className="h-80 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse"
+              className="h-80 rounded-2xl bg-[#FFE2E2]/60 border border-[#F5CBCB] animate-pulse"
             />
           ))}
         </div>
       ) : reports.length === 0 ? (
-        <div className="py-16 text-center rounded-3xl border border-slate-800/80 bg-slate-900/30 p-8 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/80 flex items-center justify-center mx-auto text-slate-500">
+        <div className="py-16 text-center rounded-3xl border border-[#F5CBCB] bg-[#FFE2E2]/60 p-8 space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-[#F5CBCB]/60 flex items-center justify-center mx-auto text-plum-800">
             <Layers className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-200">
+          <h3 className="text-lg font-bold text-plum-950">
             {activeTab === "resolved" ? "No resolved cases in archive yet" : "No active reports found"}
           </h3>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
+          <p className="text-sm text-plum-800 max-w-md mx-auto">
             {activeTab === "resolved"
               ? "When a match is confirmed and claimed, it will appear here in the Reunited archive."
               : "Try adjusting your filters or search keywords."}
@@ -355,7 +355,7 @@ export default function HomePage() {
               fetchReports();
               fetchStats();
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C5B3D3] hover:bg-[#b8a3c8] text-xs font-bold text-plum-950 border border-[#ab92bf] shadow-sm transition"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Reset Filters & Refresh</span>

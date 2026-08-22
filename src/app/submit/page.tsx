@@ -208,52 +208,52 @@ function SubmitFormContent() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 text-plum-950">
       {/* Found Item Staff Room Deposit Pop-up Modal */}
       {showFoundDepositModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel w-full max-w-md rounded-3xl border-2 border-emerald-500/50 bg-slate-900/95 shadow-2xl p-6 sm:p-8 space-y-6 relative animate-scaleIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-plum-950/60 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-md rounded-3xl border-2 border-emerald-500 bg-[#FFE2E2] shadow-2xl p-6 sm:p-8 space-y-6 relative animate-scaleIn text-plum-950">
             <button
               onClick={() => setShowFoundDepositModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-[#FBEFEF] text-plum-700 hover:text-plum-950"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Icon & Title */}
             <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <Building2 className="w-8 h-8 text-emerald-400" />
+              <div className="w-16 h-16 rounded-3xl bg-emerald-100 border border-emerald-300 flex items-center justify-center shadow-md">
+                <Building2 className="w-8 h-8 text-emerald-700" />
               </div>
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
                   Action Required: Custody Handover
                 </span>
-                <h2 className="text-xl font-extrabold text-white mt-2">
+                <h2 className="text-xl font-black text-plum-950 mt-2">
                   Please Deposit Found Item
                 </h2>
               </div>
             </div>
 
             {/* Prominent Location Box */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-indigo-950/70 border border-emerald-500/40 text-center space-y-1.5">
-              <span className="text-[11px] font-semibold uppercase text-slate-400">Designated Drop-Off Location:</span>
-              <div className="text-xl font-black text-emerald-300 flex items-center justify-center gap-2">
-                <MapPin className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="p-4 rounded-2xl bg-[#FBEFEF] border border-[#F5CBCB] text-center space-y-1.5 shadow-sm">
+              <span className="text-[11px] font-bold uppercase text-plum-700">Designated Drop-Off Location:</span>
+              <div className="text-xl font-black text-emerald-700 flex items-center justify-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>2nd Floor Staff Room</span>
               </div>
             </div>
 
             {/* Message Description */}
-            <p className="text-xs text-slate-300 text-center leading-relaxed">
-              Thank you for turning in a found item! To ensure safe custody and allow the owner to safely verify and claim their property, please deliver this item to duty staff at the <strong className="text-white font-semibold">2nd Floor Staff Room</strong> as soon as possible.
+            <p className="text-xs text-plum-800 text-center leading-relaxed font-medium">
+              Thank you for turning in a found item! To ensure safe custody and allow the owner to safely verify and claim their property, please deliver this item to duty staff at the <strong className="text-plum-950 font-bold">2nd Floor Staff Room</strong> as soon as possible.
             </p>
 
             {/* Action Buttons */}
             <div className="space-y-2 pt-1">
               <button
                 onClick={() => setShowFoundDepositModal(false)}
-                className="w-full py-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition active:scale-98 flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl text-xs font-bold bg-[#6ea17e] hover:bg-[#5e916e] text-white shadow-md border border-[#9ec0aa] transition active:scale-98 flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>I Understand & Will Deposit Item</span>
@@ -262,13 +262,13 @@ function SubmitFormContent() {
               <div className="grid grid-cols-2 gap-2">
                 <a
                   href="/"
-                  className="py-2.5 rounded-xl text-xs font-semibold text-center bg-slate-950 hover:bg-slate-850 text-slate-300 border border-slate-800 transition block"
+                  className="py-2.5 rounded-xl text-xs font-bold text-center bg-[#FBEFEF] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] shadow-sm transition block"
                 >
                   View in Main Feed
                 </a>
                 <a
                   href={`/match?reportId=${createdReportId}`}
-                  className="py-2.5 rounded-xl text-xs font-bold text-center bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition block"
+                  className="py-2.5 rounded-xl text-xs font-bold text-center bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 border border-[#ab92bf] shadow-sm transition block"
                 >
                   Check AI Matches
                 </a>
@@ -280,39 +280,39 @@ function SubmitFormContent() {
 
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">
-          <Sparkles className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-xs font-bold text-plum-800 uppercase tracking-wider mb-2">
+          <Sparkles className="w-4 h-4 text-plum-900" />
           <span>Multimodal Gemini Attribute Extraction & pgvector</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-white">
+        <h1 className="text-3xl font-black text-plum-950">
           Submit a Lost or Found Report
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-plum-800 mt-1 font-medium">
           Upload item photos and details. Gemini automatically extracts colors, brand, materials, and identifying marks to generate 768-d vector embeddings in Supabase.
         </p>
       </div>
 
       {/* Mandatory Authentication Gate if Not Signed In */}
       {!user ? (
-        <div className="glass-panel rounded-3xl p-8 border border-indigo-500/30 bg-slate-900/90 shadow-2xl space-y-6 animate-fadeIn">
+        <div className="rounded-3xl p-8 border border-[#F5CBCB] bg-[#FFE2E2] shadow-xl space-y-6 animate-fadeIn">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center shadow-md shrink-0">
-              <KeyRound className="w-6 h-6 text-indigo-400" />
+            <div className="w-12 h-12 rounded-2xl bg-[#C5B3D3]/50 border border-[#ab92bf] flex items-center justify-center shadow-md shrink-0">
+              <KeyRound className="w-6 h-6 text-plum-900" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-black text-plum-950">
                 Campus Authentication Required
               </h2>
-              <p className="text-xs text-slate-300">
-                Please sign in with your <strong className="text-indigo-300">5-digit campus ID</strong> and password to submit and manage reports.
+              <p className="text-xs text-plum-700 font-medium">
+                Please sign in with your <strong className="text-plum-950">5-digit campus ID</strong> and password to submit and manage reports.
               </p>
             </div>
           </div>
 
           <form onSubmit={handleGateLogin} className="space-y-4 max-w-md">
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Hash className="w-3.5 h-3.5 text-indigo-400" />
+              <label className="block text-xs font-bold text-plum-900 flex items-center gap-1.5">
+                <Hash className="w-3.5 h-3.5 text-plum-700" />
                 <span>5-Digit Campus ID</span>
               </label>
               <input
@@ -322,13 +322,13 @@ function SubmitFormContent() {
                 onChange={(e) => setGateCampusId(e.target.value.replace(/\D/g, ""))}
                 placeholder="e.g. 90421"
                 required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono tracking-wider text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm font-mono tracking-wider text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-indigo-400" />
+              <label className="block text-xs font-bold text-plum-900 flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-plum-700" />
                 <span>Password</span>
               </label>
               <input
@@ -337,13 +337,13 @@ function SubmitFormContent() {
                 onChange={(e) => setGatePassword(e.target.value)}
                 placeholder="Enter password"
                 required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-indigo-400" />
+              <label className="block text-xs font-bold text-plum-900 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-plum-700" />
                 <span>Full Name (Optional for first-time login)</span>
               </label>
               <input
@@ -351,13 +351,13 @@ function SubmitFormContent() {
                 value={gateName}
                 onChange={(e) => setGateName(e.target.value)}
                 placeholder="e.g. Sarah Lin"
-                className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-xs text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
               />
             </div>
 
             {gateError && (
-              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 text-xs flex items-center gap-2 font-medium">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 <span>{gateError}</span>
               </div>
             )}
@@ -365,7 +365,7 @@ function SubmitFormContent() {
             <button
               type="submit"
               disabled={gateLoading}
-              className="w-full py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl text-xs font-bold bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 shadow-md border border-[#ab92bf] transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>{gateLoading ? "Authenticating..." : "Sign In & Unlock Report Form"}</span>
@@ -375,22 +375,22 @@ function SubmitFormContent() {
       ) : (
         <>
           {/* User Status Banner */}
-          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 text-xs">
+          <div className="p-4 rounded-2xl bg-[#FFE2E2] border border-[#F5CBCB] flex items-center justify-between gap-3 text-xs shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center font-mono font-bold text-indigo-300 text-sm">
+              <div className="w-8 h-8 rounded-xl bg-[#C5B3D3] border border-[#ab92bf] flex items-center justify-center font-mono font-bold text-plum-950 text-sm">
                 #
               </div>
               <div>
-                <span className="font-bold text-white block">
+                <span className="font-bold text-plum-950 block">
                   Signed in as {user.name} (Campus ID #{user.campus_id})
                 </span>
-                <span className="text-slate-400">
+                <span className="text-plum-700">
                   This report will be tied to ID #{user.campus_id}. Only you (or Campus Admin) can resolve it.
                 </span>
               </div>
             </div>
             {isAdmin && (
-              <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shrink-0 flex items-center gap-1">
+              <span className="px-2.5 py-1 rounded-lg bg-[#C5B3D3] text-plum-950 font-bold border border-[#ab92bf] shrink-0 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Admin
               </span>
@@ -398,14 +398,14 @@ function SubmitFormContent() {
           </div>
 
           {/* Quick Presets for Demo / Testing */}
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center gap-3">
-            <span className="text-xs font-semibold text-slate-400">Quick Test Presets:</span>
+          <div className="p-4 rounded-2xl bg-[#FFE2E2]/60 border border-[#F5CBCB] flex flex-wrap items-center gap-3 shadow-sm">
+            <span className="text-xs font-bold text-plum-800">Quick Test Presets:</span>
             {PRESETS.map((preset) => (
               <button
                 key={preset.label}
                 type="button"
                 onClick={() => applyPreset(preset)}
-                className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                className="text-xs px-3 py-1.5 rounded-lg bg-[#FBEFEF] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] shadow-sm transition font-semibold"
               >
                 ⚡ {preset.label}
               </button>
@@ -414,18 +414,18 @@ function SubmitFormContent() {
 
           {/* Success Modal / Banner */}
           {createdReportId && (
-            <div className="p-6 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-5 animate-fadeIn">
+            <div className="p-6 rounded-2xl bg-emerald-100 border border-emerald-300 space-y-5 animate-fadeIn shadow-md">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                  <div className="w-10 h-10 rounded-full bg-emerald-200 border border-emerald-400 flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-700" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-emerald-300">
+                    <h3 className="text-base font-black text-emerald-900">
                       Report Created & Embedded in Supabase pgvector!
                     </h3>
-                    <p className="text-xs text-slate-300">
-                      Tied to Campus ID: <strong className="text-indigo-300 font-mono">#{createdReportCampusId}</strong>.
+                    <p className="text-xs text-emerald-800 font-medium">
+                      Tied to Campus ID: <strong className="font-mono">#{createdReportCampusId}</strong>.
                     </p>
                   </div>
                 </div>
@@ -433,13 +433,13 @@ function SubmitFormContent() {
                 <div className="flex items-center gap-2">
                   <a
                     href="/"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 transition"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FBEFEF] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] shadow-sm transition"
                   >
                     <span>View in Main Feed</span>
                   </a>
                   <a
                     href={`/match?reportId=${createdReportId}`}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 transition"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 border border-[#ab92bf] shadow-sm transition"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>Find AI Matches</span>
@@ -450,40 +450,40 @@ function SubmitFormContent() {
 
               {/* AI Extracted Attributes Breakdown */}
               {extractedAttributes && (
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
+                <div className="p-4 rounded-xl bg-[#FBEFEF] border border-emerald-300 space-y-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-xs font-bold text-plum-900">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Extracted Structured Attributes (Gemini Flash)</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 block text-[10px]">Brand</span>
-                      <span className="font-semibold text-slate-200">{extractedAttributes.brand || "N/A"}</span>
+                    <div className="p-2.5 rounded-lg bg-[#FFE2E2] border border-[#F5CBCB]">
+                      <span className="text-plum-600 block text-[10px] uppercase font-bold">Brand</span>
+                      <span className="font-bold text-plum-950">{extractedAttributes.brand || "N/A"}</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 block text-[10px]">Primary Color</span>
-                      <span className="font-semibold text-cyan-300">{extractedAttributes.primary_color || "N/A"}</span>
+                    <div className="p-2.5 rounded-lg bg-[#FFE2E2] border border-[#F5CBCB]">
+                      <span className="text-plum-600 block text-[10px] uppercase font-bold">Primary Color</span>
+                      <span className="font-bold text-plum-950">{extractedAttributes.primary_color || "N/A"}</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 block text-[10px]">Item Type</span>
-                      <span className="font-semibold text-slate-200">{extractedAttributes.item_type || "N/A"}</span>
+                    <div className="p-2.5 rounded-lg bg-[#FFE2E2] border border-[#F5CBCB]">
+                      <span className="text-plum-600 block text-[10px] uppercase font-bold">Item Type</span>
+                      <span className="font-bold text-plum-950">{extractedAttributes.item_type || "N/A"}</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 block text-[10px]">Condition</span>
-                      <span className="font-semibold text-emerald-300">{extractedAttributes.condition || "N/A"}</span>
+                    <div className="p-2.5 rounded-lg bg-[#FFE2E2] border border-[#F5CBCB]">
+                      <span className="text-plum-600 block text-[10px] uppercase font-bold">Condition</span>
+                      <span className="font-bold text-emerald-800">{extractedAttributes.condition || "N/A"}</span>
                     </div>
                   </div>
 
                   {extractedAttributes.identifying_marks && extractedAttributes.identifying_marks.length > 0 && (
-                    <div className="text-xs text-slate-300">
-                      <span className="text-slate-400 font-medium">Distinct Marks: </span>
-                      <span className="text-amber-300">{extractedAttributes.identifying_marks.join("; ")}</span>
+                    <div className="text-xs text-plum-800 font-medium">
+                      <span className="font-bold">Distinct Marks: </span>
+                      <span>{extractedAttributes.identifying_marks.join("; ")}</span>
                     </div>
                   )}
 
                   {extractedAttributes.enhanced_summary && (
-                    <div className="text-xs text-slate-400 italic">
+                    <div className="text-xs text-plum-700 italic">
                       &ldquo;{extractedAttributes.enhanced_summary}&rdquo;
                     </div>
                   )}
@@ -501,8 +501,8 @@ function SubmitFormContent() {
                 onClick={() => setType("lost")}
                 className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition ${
                   type === "lost"
-                    ? "border-rose-500 bg-rose-500/15 text-white shadow-lg shadow-rose-500/10"
-                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+                    ? "border-rose-500 bg-rose-100 text-rose-900 shadow-md font-black"
+                    : "border-[#F5CBCB] bg-[#FFE2E2]/60 text-plum-800 hover:bg-[#FFE2E2]"
                 }`}
               >
                 <span className="text-2xl">🔍</span>
@@ -515,8 +515,8 @@ function SubmitFormContent() {
                 onClick={() => setType("found")}
                 className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition ${
                   type === "found"
-                    ? "border-emerald-500 bg-emerald-500/15 text-white shadow-lg shadow-emerald-500/10"
-                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+                    ? "border-emerald-500 bg-emerald-100 text-emerald-900 shadow-md font-black"
+                    : "border-[#F5CBCB] bg-[#FFE2E2]/60 text-plum-800 hover:bg-[#FFE2E2]"
                 }`}
               >
                 <span className="text-2xl">🎁</span>
@@ -526,16 +526,16 @@ function SubmitFormContent() {
             </div>
 
             {/* Basic Information Panel */}
-            <div className="glass-panel rounded-2xl p-6 space-y-6">
-              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                <Tag className="w-4 h-4 text-indigo-400" />
+            <div className="rounded-2xl p-6 space-y-6 bg-[#FFE2E2] border border-[#F5CBCB] shadow-sm">
+              <h2 className="text-base font-black text-plum-950 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-plum-800" />
                 <span>Item Information</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Title / Item Name <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-bold text-plum-900">
+                    Title / Item Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -543,18 +543,18 @@ function SubmitFormContent() {
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Space Gray MacBook Air M2 13-inch"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Category <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-bold text-plum-900">
+                    Category <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 focus:outline-none focus:border-[#C5B3D3] shadow-sm font-semibold"
                   >
                     {CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
@@ -567,8 +567,8 @@ function SubmitFormContent() {
 
               {/* Description */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  Detailed Description <span className="text-rose-400">*</span>
+                <label className="block text-xs font-bold text-plum-900">
+                  Detailed Description <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   value={description}
@@ -576,26 +576,26 @@ function SubmitFormContent() {
                   rows={4}
                   placeholder="Describe color, stickers, scratches, distinct engravings, case details, and the circumstances..."
                   required
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-plum-600 font-medium">
                   💡 Gemini will automatically analyze this text along with the photo to extract brands, colors, materials, and distinct marks.
                 </p>
               </div>
             </div>
 
             {/* Photo Upload Panel */}
-            <div className="glass-panel rounded-2xl p-6 space-y-4">
-              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-indigo-400" />
+            <div className="rounded-2xl p-6 space-y-4 bg-[#FFE2E2] border border-[#F5CBCB] shadow-sm">
+              <h2 className="text-base font-black text-plum-950 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-plum-800" />
                 <span>Photo / Image</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* File Upload Box */}
-                <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-900/30">
-                  <Upload className="w-8 h-8 text-slate-500 mb-2" />
-                  <label className="text-xs font-semibold text-indigo-400 hover:underline cursor-pointer">
+                <div className="border-2 border-dashed border-[#F5CBCB] hover:border-[#C5B3D3] rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-[#FBEFEF]">
+                  <Upload className="w-8 h-8 text-plum-400 mb-2" />
+                  <label className="text-xs font-bold text-plum-900 hover:underline cursor-pointer">
                     Upload image file
                     <input
                       type="file"
@@ -604,12 +604,12 @@ function SubmitFormContent() {
                       className="hidden"
                     />
                   </label>
-                  <span className="text-[11px] text-slate-400 mt-1">PNG, JPG, WEBP up to 10MB</span>
+                  <span className="text-[11px] text-plum-500 mt-1">PNG, JPG, WEBP up to 10MB</span>
                 </div>
 
                 {/* Direct Image URL */}
                 <div className="space-y-2 flex flex-col justify-center">
-                  <label className="block text-xs font-semibold text-slate-300">
+                  <label className="block text-xs font-bold text-plum-900">
                     Or paste image URL
                   </label>
                   <input
@@ -620,14 +620,14 @@ function SubmitFormContent() {
                       setImageBase64(null);
                     }}
                     placeholder="https://example.com/photo.jpg"
-                    className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-xs text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                   />
                 </div>
               </div>
 
               {/* Preview */}
               {(imageBase64 || imageUrl) && (
-                <div className="relative h-44 w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                <div className="relative h-44 w-full rounded-xl overflow-hidden bg-[#FAF0F0] border border-[#F5CBCB]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imageBase64 || imageUrl}
@@ -640,7 +640,7 @@ function SubmitFormContent() {
                       setImageBase64(null);
                       setImageUrl("");
                     }}
-                    className="absolute top-2 right-2 px-2 py-1 rounded bg-rose-600/80 text-white text-[11px] hover:bg-rose-500"
+                    className="absolute top-2 right-2 px-2 py-1 rounded bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-600 shadow-sm"
                   >
                     Remove
                   </button>
@@ -649,16 +649,16 @@ function SubmitFormContent() {
             </div>
 
             {/* Location & Time Panel */}
-            <div className="glass-panel rounded-2xl p-6 space-y-6">
-              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-indigo-400" />
+            <div className="rounded-2xl p-6 space-y-6 bg-[#FFE2E2] border border-[#F5CBCB] shadow-sm">
+              <h2 className="text-base font-black text-plum-950 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-plum-800" />
                 <span>Location & Timeline</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Location / Campus Landmark <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-bold text-plum-900">
+                    Location / Campus Landmark <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -666,7 +666,7 @@ function SubmitFormContent() {
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. Main Campus Library 2nd Floor, or Student Union Lounge"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                   />
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {["Library 2nd Floor", "Student Union / Dining", "Science & Tech Hall", "Gym Locker Room", "North Quad Dorms"].map((loc) => (
@@ -674,7 +674,7 @@ function SubmitFormContent() {
                         key={loc}
                         type="button"
                         onClick={() => setLocation(loc)}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FBEFEF] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] transition shadow-sm"
                       >
                         📍 {loc}
                       </button>
@@ -683,31 +683,31 @@ function SubmitFormContent() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Date & Time <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-bold text-plum-900">
+                    Date & Time <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="datetime-local"
                     value={dateTime}
                     onChange={(e) => setDateTime(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
             {/* Contact Information & Ownership Security */}
-            <div className="glass-panel rounded-2xl p-6 space-y-6">
-              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                <User className="w-4 h-4 text-indigo-400" />
+            <div className="rounded-2xl p-6 space-y-6 bg-[#FFE2E2] border border-[#F5CBCB] shadow-sm">
+              <h2 className="text-base font-black text-plum-950 flex items-center gap-2">
+                <User className="w-4 h-4 text-plum-800" />
                 <span>Contact Method</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Your Name <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-bold text-plum-900">
+                    Your Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -715,12 +715,12 @@ function SubmitFormContent() {
                     onChange={(e) => setContactName(e.target.value)}
                     placeholder="e.g. Sarah Lin"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
+                  <label className="block text-xs font-bold text-plum-900">
                     Email / Phone Contact (Optional)
                   </label>
                   <input
@@ -728,15 +728,15 @@ function SubmitFormContent() {
                     value={contactInfo}
                     onChange={(e) => setContactInfo(e.target.value)}
                     placeholder="e.g. sarah.lin@campus.edu | 555-0192"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] text-sm text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
             {errorMsg && (
-              <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="p-4 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 text-xs flex items-center gap-2 font-bold shadow-sm">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -745,16 +745,16 @@ function SubmitFormContent() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 rounded-2xl text-base font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 transition transform active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-2xl text-base font-bold bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 border border-[#ab92bf] shadow-md shadow-[#C5B3D3]/40 transition transform active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <RefreshCw className="w-5 h-5 animate-spin text-plum-900" />
                   <span>Analyzing with Gemini & Generating 768-d Vector...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5 text-plum-900" />
                   <span>Submit Report & Run AI Vector Pipeline</span>
                 </>
               )}
@@ -768,7 +768,7 @@ function SubmitFormContent() {
 
 export default function SubmitReportPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-slate-400">Loading form...</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-plum-600">Loading form...</div>}>
       <SubmitFormContent />
     </Suspense>
   );

@@ -2,19 +2,14 @@
 
 import React, { useState } from "react";
 import { Report, ReportType, SemanticSearchResult, ItemCategory } from "@/types/report";
-import { ReportCard } from "@/components/ReportCard";
 import { AttributeBadge } from "@/components/AttributeBadge";
 import { formatDate, timeAgo, getCategoryBadge, getScoreColor } from "@/lib/utils";
 import {
   Search,
   Sparkles,
-  Filter,
   MapPin,
   Clock,
-  ArrowRight,
   RefreshCw,
-  Compass,
-  CheckCircle2
 } from "lucide-react";
 
 const SAMPLE_QUERIES = [
@@ -76,17 +71,17 @@ export default function SemanticSearchPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 text-plum-950">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">
-          <Sparkles className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-xs font-bold text-plum-800 uppercase tracking-wider mb-2">
+          <Sparkles className="w-4 h-4 text-plum-900" />
           <span>768-Dimension pgvector Semantic Search</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-white">
+        <h1 className="text-3xl font-black text-plum-950">
           Semantic & Natural Language Search
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-plum-800 mt-1 font-medium">
           Search using full sentences, physical descriptions, locations, or distinguishing features. Our vector embedding model finds semantically relevant items even with different wording.
         </p>
       </div>
@@ -99,14 +94,14 @@ export default function SemanticSearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. 'I lost my gray laptop with developer stickers at the library yesterday afternoon'..."
-            className="w-full pl-12 pr-32 py-4 rounded-2xl bg-slate-900 border-2 border-slate-800 text-base text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 shadow-xl"
+            className="w-full pl-12 pr-32 py-4 rounded-2xl bg-[#FBEFEF] border-2 border-[#F5CBCB] text-base text-plum-950 placeholder-plum-400 focus:outline-none focus:border-[#C5B3D3] shadow-md font-semibold"
           />
-          <Search className="w-6 h-6 text-slate-500 absolute left-4 top-4" />
+          <Search className="w-6 h-6 text-plum-500 absolute left-4 top-4" />
 
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="absolute right-2.5 top-2.5 bottom-2.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md transition disabled:opacity-40 flex items-center gap-1.5"
+            className="absolute right-2.5 top-2.5 bottom-2.5 px-6 rounded-xl bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 text-xs font-bold shadow-md border border-[#ab92bf] transition disabled:opacity-40 flex items-center gap-1.5"
           >
             {loading ? (
               <>
@@ -125,12 +120,12 @@ export default function SemanticSearchPage() {
         {/* Filters */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
           {/* Type Selector */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800">
+          <div className="flex items-center p-1 rounded-xl bg-[#FFE2E2] border border-[#F5CBCB] shadow-sm">
             <button
               type="button"
               onClick={() => setType("all")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                type === "all" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-slate-200"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                type === "all" ? "bg-[#C5B3D3] text-plum-950 shadow-sm border border-[#ab92bf]" : "text-plum-800 hover:text-plum-950"
               }`}
             >
               All Types
@@ -138,8 +133,8 @@ export default function SemanticSearchPage() {
             <button
               type="button"
               onClick={() => setType("lost")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                type === "lost" ? "bg-rose-500/20 text-rose-300" : "text-slate-400 hover:text-slate-200"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                type === "lost" ? "bg-rose-200 text-rose-900 border border-rose-400" : "text-plum-800 hover:text-plum-950"
               }`}
             >
               Lost Only
@@ -147,8 +142,8 @@ export default function SemanticSearchPage() {
             <button
               type="button"
               onClick={() => setType("found")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                type === "found" ? "bg-emerald-500/20 text-emerald-300" : "text-slate-400 hover:text-slate-200"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                type === "found" ? "bg-emerald-200 text-emerald-900 border border-emerald-400" : "text-plum-800 hover:text-plum-950"
               }`}
             >
               Found Only
@@ -157,11 +152,11 @@ export default function SemanticSearchPage() {
 
           {/* Category Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Category:</span>
+            <span className="text-xs font-bold text-plum-800">Category:</span>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="px-3 py-1.5 rounded-xl bg-[#FFE2E2] border border-[#F5CBCB] text-xs font-bold text-plum-900 focus:outline-none focus:border-[#C5B3D3] shadow-sm"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -174,13 +169,13 @@ export default function SemanticSearchPage() {
 
         {/* Example Query Buttons */}
         <div className="flex flex-wrap items-center gap-2 pt-2">
-          <span className="text-xs text-slate-500">Try searching:</span>
+          <span className="text-xs font-bold text-plum-700">Try searching:</span>
           {SAMPLE_QUERIES.map((sq, i) => (
             <button
               key={i}
               type="button"
               onClick={() => handleSearch(undefined, sq)}
-              className="text-xs px-3 py-1 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-indigo-300 border border-slate-800 transition"
+              className="text-xs px-3 py-1 rounded-full bg-[#FFE2E2] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] transition font-semibold shadow-sm"
             >
               &ldquo;{sq}&rdquo;
             </button>
@@ -192,14 +187,14 @@ export default function SemanticSearchPage() {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-36 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse" />
+            <div key={n} className="h-36 rounded-2xl bg-[#FFE2E2]/60 border border-[#F5CBCB] animate-pulse" />
           ))}
         </div>
       ) : hasSearched && results.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl bg-slate-900/30 border border-slate-800 p-8 space-y-3">
-          <Search className="w-10 h-10 text-slate-600 mx-auto" />
-          <h3 className="text-base font-semibold text-slate-300">No matching reports found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+        <div className="text-center py-12 rounded-2xl bg-[#FFE2E2]/60 border border-[#F5CBCB] p-8 space-y-3 shadow-sm">
+          <Search className="w-10 h-10 text-plum-400 mx-auto" />
+          <h3 className="text-base font-bold text-plum-950">No matching reports found</h3>
+          <p className="text-xs text-plum-700 max-w-sm mx-auto font-medium">
             Try phrasing your description differently or broaden your search criteria.
           </p>
         </div>
@@ -213,14 +208,14 @@ export default function SemanticSearchPage() {
             return (
               <div
                 key={report.id}
-                className="glass-card rounded-2xl p-5 border border-slate-800 bg-slate-900/70 hover:border-slate-700 transition space-y-4"
+                className="rounded-2xl p-5 border border-[#F5CBCB] bg-[#FFE2E2]/75 hover:border-[#C5B3D3] transition space-y-4 shadow-sm"
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   {/* Left Title & Status */}
                   <div className="flex items-center gap-3">
                     <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                        isLost ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm ${
+                        isLost ? "bg-rose-500 text-white" : "bg-emerald-600 text-white"
                       }`}
                     >
                       {report.type}
@@ -228,17 +223,17 @@ export default function SemanticSearchPage() {
 
                     <a
                       href={`/reports/${report.id}`}
-                      className="text-base font-bold text-slate-100 hover:text-indigo-300 transition"
+                      className="text-base font-black text-plum-950 hover:text-plum-700 transition"
                     >
                       {report.title}
                     </a>
                   </div>
 
                   {/* Similarity Badge */}
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FBEFEF] border border-[#F5CBCB] shadow-sm">
                     <div className={`w-2.5 h-2.5 rounded-full ${scoreColor.bg}`} />
-                    <span className="text-xs font-bold text-white">{scorePct}% Match</span>
-                    <span className={`text-[10px] font-semibold uppercase ${scoreColor.text}`}>
+                    <span className="text-xs font-bold text-plum-950">{scorePct}% Match</span>
+                    <span className={`text-[10px] font-bold uppercase ${scoreColor.text}`}>
                       {scoreColor.label}
                     </span>
                   </div>
@@ -247,7 +242,7 @@ export default function SemanticSearchPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                   {/* Image */}
                   {report.image_url && (
-                    <div className="sm:col-span-3 h-28 rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                    <div className="sm:col-span-3 h-28 rounded-xl overflow-hidden bg-[#FAF0F0] border border-[#F5CBCB]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={report.image_url}
@@ -259,11 +254,11 @@ export default function SemanticSearchPage() {
 
                   {/* Content Details */}
                   <div className={report.image_url ? "sm:col-span-9 space-y-2" : "sm:col-span-12 space-y-2"}>
-                    <p className="text-xs text-slate-300 line-clamp-2">{report.description}</p>
+                    <p className="text-xs text-plum-800 line-clamp-2 font-medium">{report.description}</p>
 
                     {highlighted_match_reason && (
-                      <div className="text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-500/20 px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                      <div className="text-xs text-plum-950 bg-[#C5B3D3]/40 border border-[#ab92bf] px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 font-semibold">
+                        <Sparkles className="w-3.5 h-3.5 text-plum-900 shrink-0" />
                         <span>{highlighted_match_reason}</span>
                       </div>
                     )}
@@ -289,7 +284,7 @@ export default function SemanticSearchPage() {
                 </div>
 
                 {/* Footer bar */}
-                <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+                <div className="pt-3 border-t border-[#F5CBCB] flex flex-wrap items-center justify-between text-xs text-plum-700 font-medium gap-2">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5" />
@@ -304,14 +299,14 @@ export default function SemanticSearchPage() {
                   <div className="flex items-center gap-2">
                     <a
                       href={`/match?reportId=${report.id}`}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-medium flex items-center gap-1 transition"
+                      className="px-3 py-1.5 rounded-lg bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 border border-[#ab92bf] font-bold flex items-center gap-1 transition shadow-sm"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <Sparkles className="w-3.5 h-3.5 text-plum-900" />
                       <span>Find AI Matches</span>
                     </a>
                     <a
                       href={`/reports/${report.id}`}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition"
+                      className="px-3 py-1.5 rounded-lg bg-[#FBEFEF] hover:bg-[#F5CBCB] text-plum-900 border border-[#F5CBCB] font-bold transition shadow-sm"
                     >
                       View Report
                     </a>

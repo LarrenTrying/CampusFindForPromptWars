@@ -14,21 +14,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+    <html lang="en">
+      <body className="bg-[#FBEFEF] text-plum-900 min-h-screen flex flex-col antialiased selection:bg-[#C5B3D3] selection:text-plum-950">
         <AuthProvider>
           <Navbar />
           <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-8">
             {children}
           </main>
-          <footer className="border-t border-slate-900 bg-slate-950/80 py-8 text-center text-xs text-slate-500">
+          <footer className="border-t border-[#F5CBCB] bg-[#FFE2E2]/80 backdrop-blur-md py-8 text-center text-xs text-plum-700">
             <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-400">CampusFind AI</span>
+                <span className="font-bold text-plum-900">CampusFind AI</span>
                 <span>•</span>
                 <span>Smart Campus Lost & Found Engine</span>
               </div>
-              <div className="text-slate-500">
+              <div className="text-plum-600 font-medium">
                 5-Digit Campus ID Authentication & Automated 768-d Vector Resolution Engine.
               </div>
             </div>

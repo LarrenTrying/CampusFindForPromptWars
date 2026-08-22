@@ -22,17 +22,17 @@ export const AttributeBadge: React.FC<AttributeBadgeProps> = ({
   if (!displayValue || displayValue === "null" || displayValue === "Unknown") return null;
 
   const variantStyles = {
-    default: "bg-slate-800/80 text-slate-300 border-slate-700/50",
-    brand: "bg-indigo-500/10 text-indigo-300 border-indigo-500/30",
-    color: "bg-cyan-500/10 text-cyan-300 border-cyan-500/30",
-    mark: "bg-amber-500/10 text-amber-300 border-amber-500/30",
-    condition: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    default: "bg-[#FBEFEF] text-plum-900 border-[#F5CBCB]",
+    brand: "bg-[#C5B3D3]/40 text-plum-950 border-[#C5B3D3]",
+    color: "bg-[#FFE2E2] text-plum-900 border-[#F5CBCB]",
+    mark: "bg-[#F5CBCB]/60 text-plum-950 border-[#F5CBCB]",
+    condition: "bg-emerald-100 text-emerald-900 border-emerald-300",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors shadow-sm",
         variantStyles[variant],
         className
       )}
@@ -40,7 +40,7 @@ export const AttributeBadge: React.FC<AttributeBadgeProps> = ({
     >
       {icon && <span className="opacity-75">{icon}</span>}
       <span className="opacity-60">{label}:</span>
-      <span className="font-semibold">{displayValue}</span>
+      <span className="font-bold">{displayValue}</span>
     </span>
   );
 };
