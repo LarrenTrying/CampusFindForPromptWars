@@ -62,7 +62,10 @@ export default function HomePage() {
       if (categoryFilter !== "All") params.set("category", categoryFilter);
       if (searchQuery) params.set("query", searchQuery);
 
-      const res = await fetch(`/api/reports?${params.toString()}`);
+      const res = await fetch(`/api/reports?${params.toString()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store" },
+      });
       const data = await res.json();
       if (data.success) {
         setReports(data.reports);

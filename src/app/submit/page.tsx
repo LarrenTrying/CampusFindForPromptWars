@@ -353,14 +353,22 @@ function SubmitFormContent() {
                   </div>
                 </div>
 
-                <a
-                  href={`/match?reportId=${createdReportId}`}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 transition"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Find AI Matches Now</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </a>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="/"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-800 transition"
+                  >
+                    <span>View in Main Feed</span>
+                  </a>
+                  <a
+                    href={`/match?reportId=${createdReportId}`}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 transition"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Find AI Matches</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
 
               {/* AI Extracted Attributes Breakdown */}

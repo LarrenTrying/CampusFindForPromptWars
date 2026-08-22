@@ -5,6 +5,9 @@ import { extractAttributesFromInput } from "@/lib/gemini/extractor";
 import { getEmbedding } from "@/lib/gemini/client";
 import { CreateReportInput, ReportType } from "@/types/report";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -32,13 +35,16 @@ export async function GET(request: NextRequest) {
         }
 
         const { data, error } = await dbQuery;
-        if (!error && data) {
-          return NextResponse.json({ success: true, reports: data, source: "supabase" });
+        if (!error && data && data.length > 0) {
+          return NextResponse.json(
+            { success: true, reports: data, source: "supabase" },
+            { headers: { "Cache-Control": "no-store, max-age=0" } }
+          );
         }
       }
     }
 
-    // Mock DB Fallback
+    // Mock DB Fallback & In-Memory Sync
     const reports = MockDb.getAllReports({
       type: type || undefined,
       category: category || undefined,
@@ -46,11 +52,14 @@ export async function GET(request: NextRequest) {
       query: query || undefined,
     });
 
-    return NextResponse.json({
-      success: true,
-      reports,
-      source: "mock_db",
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        reports,
+        source: "mock_db",
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error: any) {
     console.error("GET /api/reports error:", error);
     return NextResponse.json(
@@ -98,13 +107,23 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     // 3. Generate 768-d embedding
     const embedding = await getEmbedding(embeddingText);
 
-    // 4. Save to Supabase pgvector or MockDb
+    // 4. Save to MockDb first so it is immediately visible
     const campusId = body.reporter_campus_id || "90421";
+    const newReport = MockDb.createReport(
+      {
+        ...body,
+        reporter_campus_id: campusId,
+      },
+      extractedAttributes,
+      embedding
+    );
 
+    // 5. Also save to Supabase pgvector if connected
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
       if (supabase) {
         const insertPayload = {
+          id: newReport.id,
           type: body.type,
           title: body.title,
           description: body.description,
@@ -137,19 +156,9 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
             source: "supabase",
           });
         }
-        console.warn("Supabase insert error, falling back to local store:", error);
+        console.warn("Supabase insert error, saved to local store:", error);
       }
     }
-
-    // Save to MockDb
-    const newReport = MockDb.createReport(
-      {
-        ...body,
-        reporter_campus_id: campusId,
-      },
-      extractedAttributes,
-      embedding
-    );
 
     return NextResponse.json({
       success: true,
