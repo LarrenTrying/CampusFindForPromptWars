@@ -1,8 +1,78 @@
-import { Report, ReportType, ItemCategory, CreateReportInput } from "@/types/report";
-import { computeCosineSimilarity, generateDeterministicEmbedding } from "../utils";
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
-// Pre-seeded Realistic Campus Lost & Found Reports
-export const INITIAL_REPORTS: Report[] = [
+// Read .env.local natively
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+  const content = fs.readFileSync(envPath, 'utf8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const idx = trimmed.indexOf('=');
+      const key = trimmed.substring(0, idx).trim();
+      const val = trimmed.substring(idx + 1).trim();
+      process.env[key] = val;
+    }
+  }
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Missing Supabase credentials in .env.local");
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+function generateDeterministicEmbedding(text, dimensions = 768) {
+  const normalized = (text || "").toLowerCase().trim();
+  const vector = new Array(dimensions).fill(0);
+  if (!normalized) return vector;
+
+  const words = normalized.split(/\W+/).filter(Boolean);
+
+  for (let w = 0; w < words.length; w++) {
+    const word = words[w];
+    let hash = 5381;
+    for (let i = 0; i < word.length; i++) {
+      hash = (hash * 33) ^ word.charCodeAt(i);
+    }
+    for (let k = 0; k < 12; k++) {
+      const idx = Math.abs((hash + k * 97) % dimensions);
+      const sign = (hash + k) % 2 === 0 ? 1 : -1;
+      const weight = 1.0 / Math.sqrt(w + 1);
+      vector[idx] += sign * weight;
+    }
+  }
+
+  for (let i = 0; i < normalized.length - 2; i++) {
+    const trigram = normalized.substring(i, i + 3);
+    let hash = 0;
+    for (let j = 0; j < trigram.length; j++) {
+      hash = (hash << 5) - hash + trigram.charCodeAt(j);
+    }
+    const idx = Math.abs(hash % dimensions);
+    vector[idx] += 0.4;
+  }
+
+  let norm = 0;
+  for (let i = 0; i < dimensions; i++) {
+    norm += vector[i] * vector[i];
+  }
+  norm = Math.sqrt(norm);
+  if (norm > 0) {
+    for (let i = 0; i < dimensions; i++) {
+      vector[i] = vector[i] / norm;
+    }
+  }
+
+  return vector;
+}
+
+const SEED_REPORTS = [
   {
     id: "8d754f9a-1122-4411-9988-111111111111",
     type: "lost",
@@ -29,9 +99,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "High",
       keyword_tags: ["laptop", "macbook", "apple", "m2", "stickers", "library"],
       enhanced_summary: "Apple MacBook Air M2 in Space Gray with distinctive developer stickers (GitHub, OpenAI) lost in library.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-222222222222",
@@ -59,9 +127,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "High",
       keyword_tags: ["apple", "macbook", "laptop", "stickers", "found", "library"],
       enhanced_summary: "Found Space Gray Apple MacBook with tech stickers at the campus library 2nd floor desk.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-333333333333",
@@ -88,9 +154,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "Medium",
       keyword_tags: ["wallet", "leather", "fossil", "brown", "student id", "student union"],
       enhanced_summary: "Brown Fossil leather bi-fold wallet with red stitching details and student ID lost in Student Union.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-444444444444",
@@ -117,9 +181,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "Medium",
       keyword_tags: ["wallet", "leather", "brown", "student union", "found", "id cards"],
       enhanced_summary: "Brown leather wallet with embossed logo and red stitching found on student union sofa.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-555555555555",
@@ -147,9 +209,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "Medium",
       keyword_tags: ["calculator", "ti-84", "texas instruments", "rose gold", "science hall", "math"],
       enhanced_summary: "Rose Gold TI-84 Plus CE calculator with chemistry decal lost in Science Hall room 101.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-666666666666",
@@ -177,9 +237,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "Medium",
       keyword_tags: ["calculator", "ti-84", "texas instruments", "rose gold", "found", "science hall"],
       enhanced_summary: "Found Rose Gold TI-84 calculator with science sticker in Science Hall lecture room.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-777777777777",
@@ -207,9 +265,7 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "Medium",
       keyword_tags: ["airpods", "apple", "earbuds", "green case", "gym", "campus rec"],
       enhanced_summary: "Apple AirPods Pro with olive green silicone case and brass carabiner lost in Campus Rec locker room.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    }
   },
   {
     id: "8d754f9a-1122-4411-9988-888888888888",
@@ -236,197 +292,49 @@ export const INITIAL_REPORTS: Report[] = [
       estimated_value_range: "Medium",
       keyword_tags: ["keys", "dorm key", "toyota", "stitch", "keychain", "engineering quad"],
       enhanced_summary: "Dorm room keys and Toyota key fob with blue Disney Stitch plush keychain lost on Engineering Quad.",
-    },
-    embedding: null,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+    }
   }
 ];
 
-// Helper to pre-embed reports
-function initializeEmbeddings(reports: Report[]): Report[] {
-  return reports.map((r) => {
-    if (!r.embedding || r.embedding.length === 0) {
-      const summaryText = `${r.title} ${r.description} ${r.category} ${r.location} ${
-        r.attributes?.brand || ""
-      } ${r.attributes?.primary_color || ""} ${r.attributes?.materials?.join(" ") || ""} ${
-        r.attributes?.identifying_marks?.join(" ") || ""
-      } ${r.attributes?.keyword_tags?.join(" ") || ""}`;
-      return {
-        ...r,
-        embedding: generateDeterministicEmbedding(summaryText, 768),
-      };
-    }
-    return r;
-  });
-}
+async function seed() {
+  console.log("Seeding Supabase with campus lost & found reports...");
+  for (const report of SEED_REPORTS) {
+    const summaryText = `${report.title} ${report.description} ${report.category} ${report.location} ${
+      report.attributes?.brand || ""
+    } ${report.attributes?.primary_color || ""} ${report.attributes?.materials?.join(" ") || ""} ${
+      report.attributes?.identifying_marks?.join(" ") || ""
+    } ${report.attributes?.keyword_tags?.join(" ") || ""}`;
 
-// Global in-memory storage for reports
-declare global {
-  // eslint-disable-next-line no-var
-  var __MOCK_REPORTS_DB: Report[] | undefined;
-}
+    const embedding = generateDeterministicEmbedding(summaryText, 768);
 
-function getDatabase(): Report[] {
-  if (!global.__MOCK_REPORTS_DB) {
-    global.__MOCK_REPORTS_DB = initializeEmbeddings([...INITIAL_REPORTS]);
-  }
-  return global.__MOCK_REPORTS_DB;
-}
-
-export const MockDb = {
-  getAllReports(filters?: {
-    type?: ReportType | "all";
-    category?: string;
-    status?: string;
-    query?: string;
-  }): Report[] {
-    let list = getDatabase();
-
-    if (filters?.type && filters.type !== "all") {
-      list = list.filter((r) => r.type === filters.type);
-    }
-    if (filters?.category && filters.category !== "All") {
-      list = list.filter((r) => r.category === filters.category);
-    }
-    if (filters?.status && filters.status !== "all") {
-      list = list.filter((r) => r.status === filters.status);
-    }
-    if (filters?.query) {
-      const q = filters.query.toLowerCase();
-      list = list.filter(
-        (r) =>
-          r.title.toLowerCase().includes(q) ||
-          r.description.toLowerCase().includes(q) ||
-          r.location.toLowerCase().includes(q) ||
-          (r.reporter_campus_id && r.reporter_campus_id.toLowerCase().includes(q)) ||
-          r.attributes?.brand?.toLowerCase().includes(q) ||
-          r.attributes?.primary_color?.toLowerCase().includes(q)
-      );
-    }
-
-    return [...list].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  },
-
-  getReportById(id: string): Report | null {
-    const list = getDatabase();
-    return list.find((r) => r.id === id) || null;
-  },
-
-  createReport(
-    input: CreateReportInput,
-    extractedAttributes: Report["attributes"],
-    embedding: number[]
-  ): Report {
-    const list = getDatabase();
-    const newReport: Report = {
-      id: crypto.randomUUID(),
-      type: input.type,
-      title: input.title,
-      description: input.description,
-      category: input.category || extractedAttributes?.category || "Other",
-      image_url: input.image_url || input.image_base64 || null,
-      location: input.location,
-      date_time: input.date_time || new Date().toISOString(),
-      contact_name: input.contact_name,
-      contact_info: input.contact_info,
-      reporter_campus_id: input.reporter_campus_id || "90421",
-      status: "active",
-      attributes: {
-        ...extractedAttributes,
-        ...input.custom_attributes,
-      },
-      embedding: embedding || generateDeterministicEmbedding(`${input.title} ${input.description}`, 768),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    const payload = {
+      id: report.id,
+      type: report.type,
+      title: report.title,
+      description: report.description,
+      category: report.category,
+      image_url: report.image_url,
+      location: report.location,
+      date_time: report.date_time,
+      contact_name: report.contact_name,
+      contact_info: report.contact_info,
+      reporter_campus_id: report.reporter_campus_id,
+      status: report.status,
+      attributes: report.attributes,
+      embedding: embedding,
     };
 
-    list.unshift(newReport);
-    return newReport;
-  },
+    const { error } = await supabase
+      .from('reports')
+      .upsert(payload, { onConflict: 'id' });
 
-  createReportWithId(report: Report): Report {
-    const list = getDatabase();
-    const existingIndex = list.findIndex((r) => r.id === report.id);
-    if (existingIndex >= 0) {
-      list[existingIndex] = report;
+    if (error) {
+      console.warn(`Failed to insert report "${report.title}":`, error.message);
     } else {
-      list.unshift(report);
+      console.log(`✓ Inserted: [${report.type.toUpperCase()}] ${report.title}`);
     }
-    return report;
-  },
+  }
+  console.log("Seeding completed successfully!");
+}
 
-  updateReportStatus(id: string, status: Report["status"]): Report | null {
-    const list = getDatabase();
-    const item = list.find((r) => r.id === id);
-    if (!item) return null;
-    item.status = status;
-    item.updated_at = new Date().toISOString();
-    return item;
-  },
-
-  matchOppositeReports(
-    queryEmbedding: number[],
-    targetType: ReportType,
-    threshold = 0.05,
-    limit = 8
-  ): { report: Report; similarity: number }[] {
-    const list = getDatabase();
-    const oppositeCandidates = list.filter(
-      (r) => r.type === targetType && r.status === "active" && r.embedding
-    );
-
-    const scored = oppositeCandidates.map((candidate) => {
-      const sim = computeCosineSimilarity(queryEmbedding, candidate.embedding!);
-      return {
-        report: candidate,
-        similarity: sim,
-      };
-    });
-
-    return scored
-      .filter((item) => item.similarity >= threshold)
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, limit);
-  },
-
-  searchReports(
-    queryEmbedding: number[],
-    filterType?: ReportType | "all",
-    filterCategory?: string,
-    threshold = 0.15,
-    limit = 12
-  ): { report: Report; similarity: number }[] {
-    let list = getDatabase().filter((r) => r.embedding);
-
-    if (filterType && filterType !== "all") {
-      list = list.filter((r) => r.type === filterType);
-    }
-    if (filterCategory && filterCategory !== "All") {
-      list = list.filter((r) => r.category === filterCategory);
-    }
-
-    const scored = list.map((item) => {
-      const sim = computeCosineSimilarity(queryEmbedding, item.embedding!);
-      return {
-        report: item,
-        similarity: sim,
-      };
-    });
-
-    return scored
-      .filter((item) => item.similarity >= threshold)
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, limit);
-  },
-
-  clearAllReports(): void {
-    global.__MOCK_REPORTS_DB = [];
-  },
-
-  resetToSeedData(): Report[] {
-    global.__MOCK_REPORTS_DB = initializeEmbeddings([...INITIAL_REPORTS]);
-    return global.__MOCK_REPORTS_DB;
-  },
-};
+seed();
