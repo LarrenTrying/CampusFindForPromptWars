@@ -1,7 +1,7 @@
 import { Report, ReportType, ItemCategory, CreateReportInput } from "@/types/report";
 import { computeCosineSimilarity, generateDeterministicEmbedding } from "../utils";
 
-// Purely Campus-Focused Lost & Found Pairs
+// Purely Campus-Focused Lost & Found Pairs with 5-digit campus IDs
 const INITIAL_REPORTS: Report[] = [
   {
     id: "rep-101",
@@ -14,6 +14,9 @@ const INITIAL_REPORTS: Report[] = [
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
     contact_name: "Sarah Lin",
     contact_info: "sarah.lin@campus.edu | (555) 234-5678",
+    reporter_campus_id: "90421",
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Electronics & Laptops",
@@ -41,8 +44,11 @@ const INITIAL_REPORTS: Report[] = [
     image_url: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=800&q=80",
     location: "Library Front Circulation Desk (found on 2nd Floor)",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(), // 22 hours ago
-    contact_name: "Library Desk Staff",
+    contact_name: "Library Desk Staff (Admin)",
     contact_info: "library-desk@campus.edu | Ext. 402",
+    reporter_campus_id: "43554", // Admin
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Electronics & Laptops",
@@ -65,13 +71,16 @@ const INITIAL_REPORTS: Report[] = [
     id: "rep-103",
     type: "lost",
     title: "Fossil Brown Leather Bi-fold Wallet with Student ID",
-    description: "Lost my brown vintage Fossil leather wallet. Contains Campus student ID (David K., ID #9042), driver's license, and campus dining card. Red accent stitching inside seam.",
+    description: "Lost my brown vintage Fossil leather wallet. Contains Campus student ID (David K., ID #71829), driver's license, and campus dining card. Red accent stitching inside seam.",
     category: "Student IDs & Wallets",
     image_url: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=800&q=80",
     location: "Student Union Lounge & Dining Hall",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
     contact_name: "David Kim",
     contact_info: "dkim99@campus.edu | (555) 789-0123",
+    reporter_campus_id: "71829",
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Student IDs & Wallets",
@@ -80,7 +89,7 @@ const INITIAL_REPORTS: Report[] = [
       primary_color: "Brown",
       secondary_colors: ["Red", "Tan"],
       materials: ["Genuine Leather"],
-      identifying_marks: ["Red accent stitching on interior flap", "Fossil embossed logo on front right", "Student ID #9042 inside"],
+      identifying_marks: ["Red accent stitching on interior flap", "Fossil embossed logo on front right", "Student ID #71829 inside"],
       condition: "Worn",
       estimated_value_range: "Medium",
       keyword_tags: ["wallet", "leather", "fossil", "brown", "student id", "student union"],
@@ -98,8 +107,11 @@ const INITIAL_REPORTS: Report[] = [
     image_url: "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?auto=format&fit=crop&w=800&q=80",
     location: "Student Union Info Desk (found near coffee kiosk)",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-    contact_name: "Student Services Desk",
+    contact_name: "Student Services Desk (Admin)",
     contact_info: "student-services@campus.edu | (555) 345-HELP",
+    reporter_campus_id: "43554", // Admin
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Student IDs & Wallets",
@@ -128,6 +140,9 @@ const INITIAL_REPORTS: Report[] = [
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
     contact_name: "Maya Patel",
     contact_info: "mpatel@campus.edu | (555) 441-2091",
+    reporter_campus_id: "55120",
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Calculators & Books",
@@ -155,8 +170,11 @@ const INITIAL_REPORTS: Report[] = [
     image_url: "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=800&q=80",
     location: "Science Hall TA Office Room 204 (Found in Room 101)",
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-    contact_name: "Math TA Office",
+    contact_name: "Math TA Office (Admin)",
     contact_info: "math-ta@campus.edu | Office 204",
+    reporter_campus_id: "43554", // Admin
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Calculators & Books",
@@ -186,6 +204,9 @@ const INITIAL_REPORTS: Report[] = [
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
     contact_name: "Alex Thorne",
     contact_info: "alex.t@campus.edu | 555-0192",
+    reporter_campus_id: "88219",
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Electronics & Laptops",
@@ -215,6 +236,9 @@ const INITIAL_REPORTS: Report[] = [
     date_time: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
     contact_name: "Chloe Miller",
     contact_info: "chloe.m@campus.edu",
+    reporter_campus_id: "66401",
+    reporter_pin: "1234",
+    secret_pin: "1234",
     status: "active",
     attributes: {
       category: "Dorm & Car Keys",
@@ -290,6 +314,7 @@ export const MockDb = {
           r.title.toLowerCase().includes(q) ||
           r.description.toLowerCase().includes(q) ||
           r.location.toLowerCase().includes(q) ||
+          (r.reporter_campus_id && r.reporter_campus_id.includes(q)) ||
           r.attributes?.brand?.toLowerCase().includes(q) ||
           r.attributes?.primary_color?.toLowerCase().includes(q)
       );
@@ -322,6 +347,9 @@ export const MockDb = {
       date_time: input.date_time || new Date().toISOString(),
       contact_name: input.contact_name,
       contact_info: input.contact_info,
+      reporter_campus_id: input.reporter_campus_id || "90421",
+      reporter_pin: input.reporter_pin || input.secret_pin || "1234",
+      secret_pin: input.secret_pin || input.reporter_pin || "1234",
       status: "active",
       attributes: {
         ...extractedAttributes,

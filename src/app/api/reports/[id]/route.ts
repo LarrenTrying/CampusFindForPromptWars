@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase, isServerSupabaseConfigured } from "@/lib/supabase/server";
 import { MockDb } from "@/lib/db/mockDb";
 
-const ADMIN_PASSKEYS = ["campusadmin", "admin123", "promptwars2026", process.env.ADMIN_KEY].filter(Boolean);
+const ADMIN_CAMPUS_ID = "43554";
+const ADMIN_PASSKEYS = ["43554", "campusadmin", "admin123", process.env.ADMIN_KEY].filter(Boolean);
 
 export async function GET(
   request: NextRequest,
@@ -51,7 +52,8 @@ export async function PATCH(
     const id = params.id;
     const body = await request.json();
     const status = body.status;
-    const passkey = (body.passkey || body.pin || "").toString().trim().toLowerCase();
+    const campusId = (body.campus_id || body.campusId || "").toString().trim();
+    const pin = (body.pin || body.passkey || "").toString().trim();
     const contactVerification = (body.email || body.contact || "").toString().trim().toLowerCase();
 
     if (!["active", "matched", "resolved"].includes(status)) {
@@ -61,7 +63,7 @@ export async function PATCH(
       );
     }
 
-    // 1. Fetch current report to verify ownership
+    // 1. Fetch current report
     let currentReport = MockDb.getReportById(id);
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
@@ -78,26 +80,48 @@ export async function PATCH(
       );
     }
 
-    // 2. Security / Authorization Check
-    // If setting to 'resolved' or changing status, check authorization
-    const isAdmin = ADMIN_PASSKEYS.some((k) => k && k.toLowerCase() === passkey);
-    const isPinMatch = currentReport.secret_pin && currentReport.secret_pin.toString().trim() === passkey;
+    // 2. Authorization Verification
+    // Condition A: Admin ID 43554 or Admin Passkey
+    const isAdmin =
+      campusId === ADMIN_CAMPUS_ID ||
+      ADMIN_PASSKEYS.some((k) => k && k.toString().toLowerCase() === pin.toLowerCase()) ||
+      ADMIN_PASSKEYS.some((k) => k && k.toString().toLowerCase() === campusId.toLowerCase());
+
+    // Condition B: Original Reporter (5-digit Campus ID match + PIN match)
+    const isReporterIdMatch =
+      currentReport.reporter_campus_id &&
+      campusId &&
+      currentReport.reporter_campus_id.toString().trim() === campusId;
+
+    const isPinMatch =
+      (currentReport.reporter_pin && currentReport.reporter_pin.toString().trim() === pin) ||
+      (currentReport.secret_pin && currentReport.secret_pin.toString().trim() === pin);
+
+    // Condition C: Contact Info / Email match
     const isContactMatch =
       contactVerification &&
       (currentReport.contact_info.toLowerCase().includes(contactVerification) ||
         currentReport.contact_name.toLowerCase().includes(contactVerification));
 
-    if (!isAdmin && !isPinMatch && !isContactMatch) {
+    const isAuthorized = isAdmin || (isReporterIdMatch && isPinMatch) || (isContactMatch && isPinMatch) || isPinMatch;
+
+    if (!isAuthorized) {
       return NextResponse.json(
         {
           success: false,
-          error: "Unauthorized: You must provide the Reporter Secret PIN, Reporter Contact Email, or Campus Admin Passkey to resolve this case.",
+          error: `Unauthorized: This report can only be resolved by the original reporter (ID: ${
+            currentReport.reporter_campus_id || "Reporter"
+          }) with their PIN, or the Campus Administrator (Admin ID: ${ADMIN_CAMPUS_ID}).`,
         },
         { status: 403 }
       );
     }
 
     // 3. Update status in Database
+    const authorizedBy = isAdmin
+      ? `Campus Administrator (Admin ID: ${ADMIN_CAMPUS_ID})`
+      : `Verified Reporter (Campus ID: ${campusId || currentReport.reporter_campus_id || "Student"})`;
+
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
       if (supabase) {
@@ -112,7 +136,7 @@ export async function PATCH(
           return NextResponse.json({
             success: true,
             report: data,
-            authorized_by: isAdmin ? "Campus Admin" : "Verified Reporter",
+            authorized_by: authorizedBy,
           });
         }
       }
@@ -122,7 +146,7 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       report: updated,
-      authorized_by: isAdmin ? "Campus Admin" : "Verified Reporter",
+      authorized_by: authorizedBy,
     });
   } catch (error: any) {
     return NextResponse.json(

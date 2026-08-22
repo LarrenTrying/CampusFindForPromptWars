@@ -69,20 +69,25 @@ const PRESETS = [
   },
 ];
 
+import { useAuth } from "@/context/AuthContext";
+
 function SubmitFormContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ReportType) || "lost";
+  const { user } = useAuth();
 
   const [type, setType] = useState<ReportType>(initialType);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<string>("Electronics");
+  const [category, setCategory] = useState<string>("Electronics & Laptops");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [dateTime, setDateTime] = useState(
     new Date().toISOString().slice(0, 16)
   );
-  const [contactName, setContactName] = useState("");
+  const [contactName, setContactName] = useState(user?.name || "");
   const [contactInfo, setContactInfo] = useState("");
+  const [campusId, setCampusId] = useState(user?.campus_id || "");
+  const [pin, setPin] = useState(user?.pin || "");
   const [imageUrl, setImageUrl] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
@@ -91,6 +96,7 @@ function SubmitFormContent() {
   const [extractedAttributes, setExtractedAttributes] = useState<ReportAttributes | null>(null);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [createdReportPin, setCreatedReportPin] = useState<string | null>(null);
+  const [createdReportCampusId, setCreatedReportCampusId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +120,8 @@ function SubmitFormContent() {
     setImageBase64(null);
     setContactName(preset.name);
     setContactInfo(preset.contact);
+    setCampusId(user?.campus_id || "90421");
+    setPin(user?.pin || "1234");
     setExtractedAttributes(null);
     setCreatedReportId(null);
   };
@@ -122,6 +130,16 @@ function SubmitFormContent() {
     e.preventDefault();
     if (!title || !description || !location || !contactName) {
       setErrorMsg("Please fill out all required fields.");
+      return;
+    }
+
+    if (!campusId || !/^\d{5}$/.test(campusId.trim())) {
+      setErrorMsg("Please provide your valid 5-digit Campus ID number (e.g. 90421).");
+      return;
+    }
+
+    if (!pin || pin.length < 3) {
+      setErrorMsg("Please choose a security PIN of at least 3 characters so you can resolve this item later.");
       return;
     }
 
@@ -140,7 +158,10 @@ function SubmitFormContent() {
         location,
         date_time: new Date(dateTime).toISOString(),
         contact_name: contactName,
-        contact_info: contactInfo,
+        contact_info: contactInfo || `Student #${campusId}`,
+        reporter_campus_id: campusId.trim(),
+        reporter_pin: pin.trim(),
+        secret_pin: pin.trim(),
       };
 
       const res = await fetch("/api/reports", {
@@ -156,7 +177,8 @@ function SubmitFormContent() {
 
       setExtractedAttributes(data.report.attributes);
       setCreatedReportId(data.report.id);
-      setCreatedReportPin(data.secret_pin || data.report.secret_pin || "8492");
+      setCreatedReportPin(pin.trim());
+      setCreatedReportCampusId(campusId.trim());
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during report submission.");
     } finally {
@@ -488,23 +510,23 @@ function SubmitFormContent() {
           </div>
         </div>
 
-        {/* Contact Information */}
+        {/* Contact Information & Ownership Security */}
         <div className="glass-panel rounded-2xl p-6 space-y-6">
           <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
             <User className="w-4 h-4 text-indigo-400" />
-            <span>Contact Information</span>
+            <span>Campus Reporter Identity & Security</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-300">
-                Your Name / Department <span className="text-rose-400">*</span>
+                Your Full Name <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
-                placeholder="e.g. Sarah Lin or Library Front Desk"
+                placeholder="e.g. Sarah Lin or Alex Johnson"
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
@@ -512,16 +534,53 @@ function SubmitFormContent() {
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-300">
-                Contact Method (Email / Phone) <span className="text-rose-400">*</span>
+                Email / Phone Contact <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
                 value={contactInfo}
                 onChange={(e) => setContactInfo(e.target.value)}
-                placeholder="e.g. sarah.lin@example.com | 555-0192"
+                placeholder="e.g. sarah.lin@campus.edu | 555-0192"
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
+            </div>
+
+            {/* 5-Digit Campus ID */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                5-Digit Campus ID Number <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="text"
+                maxLength={5}
+                value={campusId}
+                onChange={(e) => setCampusId(e.target.value.replace(/\D/g, ""))}
+                placeholder="e.g. 90421 or 43554 for Admin"
+                required
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono tracking-widest text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+              <p className="text-[11px] text-slate-400">
+                Identifies you as the owner of this report.
+              </p>
+            </div>
+
+            {/* Custom PIN */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Custom Security PIN <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="password"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                placeholder="Choose a PIN to authorize resolution later"
+                required
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+              <p className="text-[11px] text-slate-400">
+                Used to resolve/claim matches (or Admin ID 43554).
+              </p>
             </div>
           </div>
         </div>

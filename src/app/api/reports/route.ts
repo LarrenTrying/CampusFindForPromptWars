@@ -102,6 +102,9 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     const secretPin = body.secret_pin || Math.floor(1000 + Math.random() * 9000).toString();
 
     // 4. Save to Supabase pgvector or MockDb
+    const campusId = body.reporter_campus_id || "90421";
+    const userPin = body.reporter_pin || body.secret_pin || secretPin;
+
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
       if (supabase) {
@@ -115,7 +118,9 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           date_time: body.date_time || new Date().toISOString(),
           contact_name: body.contact_name,
           contact_info: body.contact_info,
-          secret_pin: secretPin,
+          reporter_campus_id: campusId,
+          reporter_pin: userPin,
+          secret_pin: userPin,
           status: "active",
           attributes: {
             ...extractedAttributes,
@@ -134,7 +139,8 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           return NextResponse.json({
             success: true,
             report: data,
-            secret_pin: secretPin,
+            reporter_campus_id: campusId,
+            secret_pin: userPin,
             source: "supabase",
           });
         }
@@ -144,7 +150,12 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
 
     // Save to MockDb
     const newReport = MockDb.createReport(
-      { ...body, secret_pin: secretPin },
+      {
+        ...body,
+        reporter_campus_id: campusId,
+        reporter_pin: userPin,
+        secret_pin: userPin,
+      },
       extractedAttributes,
       embedding
     );
@@ -152,7 +163,8 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     return NextResponse.json({
       success: true,
       report: newReport,
-      secret_pin: secretPin,
+      reporter_campus_id: campusId,
+      secret_pin: userPin,
       source: "mock_db",
     });
   } catch (error: any) {
