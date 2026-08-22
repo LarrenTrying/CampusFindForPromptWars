@@ -145,6 +145,20 @@ function SubmitFormContent() {
       setCreatedReportId(data.report.id);
       setCreatedReportCampusId(user.campus_id);
 
+      // Reset all text boxes and input fields
+      setTitle("");
+      setDescription("");
+      setLocation("");
+      setImageUrl("");
+      setImageBase64(null);
+      setContactInfo("");
+      setDateTime(new Date().toISOString().slice(0, 16));
+
+      // Scroll smoothly back to the top of the page
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
       // Trigger deposit popup for found item reports
       if (type === "found") {
         setShowFoundDepositModal(true);
