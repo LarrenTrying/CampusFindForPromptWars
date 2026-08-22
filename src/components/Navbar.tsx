@@ -10,6 +10,7 @@ import {
   PlusCircle, 
   Compass, 
   User,
+  Users,
   ShieldCheck,
   LogOut,
   KeyRound,
@@ -27,6 +28,7 @@ export const Navbar: React.FC = () => {
     { href: "/submit", label: "Submit Report", icon: PlusCircle },
     { href: "/search", label: "Semantic Search", icon: Search },
     { href: "/match", label: "AI Match Hub", icon: Sparkles },
+    { href: "/users", label: "User Directory", icon: Users },
   ];
 
   return (

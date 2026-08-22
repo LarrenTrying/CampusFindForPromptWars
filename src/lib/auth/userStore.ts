@@ -1,8 +1,30 @@
+import { MockDb } from "@/lib/db/mockDb";
+
 export interface StoredUser {
   campus_id: string; // 5-digit ID
   password: string;  // saved password
   name: string;
   is_admin: boolean;
+}
+
+export interface UserStats {
+  campus_id: string;
+  name: string;
+  is_admin: boolean;
+  total_reports: number;
+  lost_reports_count: number;
+  found_reports_count: number;
+  resolved_reports_count: number;
+  active_reports_count: number;
+  recent_reports: Array<{
+    id: string;
+    title: string;
+    type: string;
+    category: string;
+    status: string;
+    location: string;
+    created_at: string;
+  }>;
 }
 
 export const ADMIN_ID = "43554";
@@ -163,5 +185,64 @@ export const UserStore = {
       authorized: false,
       error: `Unauthorized: Only the original reporter (ID #${reportOwnerId || "Owner"}) or Campus Admin can resolve this report.`,
     };
+  },
+
+  /**
+   * Get all registered campus users aggregated with their report counts & statistics
+   */
+  getAllUsersWithStats(): UserStats[] {
+    const map = getUsersMap();
+    const allReports = MockDb.getAllReports();
+
+    // Also include any reporter IDs that exist in reports but not in map
+    for (const r of allReports) {
+      if (r.reporter_campus_id && !map.has(r.reporter_campus_id)) {
+        map.set(r.reporter_campus_id, {
+          campus_id: r.reporter_campus_id,
+          password: "saved",
+          name: r.contact_name || `Student #${r.reporter_campus_id}`,
+          is_admin: r.reporter_campus_id === ADMIN_ID,
+        });
+      }
+    }
+
+    const result: UserStats[] = [];
+
+    map.forEach((user) => {
+      const userReports = allReports.filter(
+        (r) => r.reporter_campus_id === user.campus_id
+      );
+
+      const lostCount = userReports.filter((r) => r.type === "lost" && r.status !== "resolved").length;
+      const foundCount = userReports.filter((r) => r.type === "found" && r.status !== "resolved").length;
+      const resolvedCount = userReports.filter((r) => r.status === "resolved").length;
+
+      result.push({
+        campus_id: user.campus_id,
+        name: user.name,
+        is_admin: user.is_admin,
+        total_reports: userReports.length,
+        lost_reports_count: lostCount,
+        found_reports_count: foundCount,
+        resolved_reports_count: resolvedCount,
+        active_reports_count: lostCount + foundCount,
+        recent_reports: userReports.map((r) => ({
+          id: r.id,
+          title: r.title,
+          type: r.type,
+          category: r.category,
+          status: r.status,
+          location: r.location,
+          created_at: r.created_at,
+        })),
+      });
+    });
+
+    // Sort: Admin first, then by total reports descending
+    return result.sort((a, b) => {
+      if (a.is_admin && !b.is_admin) return -1;
+      if (!a.is_admin && b.is_admin) return 1;
+      return b.total_reports - a.total_reports;
+    });
   },
 };
