@@ -78,10 +78,12 @@ export async function PATCH(
     }
 
     // 2. Authorize via UserStore
+    const isAuthenticatedSession = Boolean(body.is_authenticated || body.session_verified);
     const verification = UserStore.verifyForResolution(
       campusId,
       password,
-      currentReport.reporter_campus_id
+      currentReport.reporter_campus_id,
+      isAuthenticatedSession
     );
 
     if (!verification.authorized) {

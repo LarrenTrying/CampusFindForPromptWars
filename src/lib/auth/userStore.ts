@@ -151,23 +151,30 @@ export const UserStore = {
    */
   verifyForResolution(
     campusId: string,
-    password: string,
-    reportOwnerId?: string
+    password?: string,
+    reportOwnerId?: string,
+    isAuthenticatedSession?: boolean
   ): {
     authorized: boolean;
     authorizedBy?: string;
     error?: string;
   } {
     const cleanId = campusId.trim();
-    const cleanPass = password.trim();
+    const cleanPass = (password || "").trim();
 
     // 1. Admin Master Resolution
-    if (cleanId === ADMIN_ID && cleanPass === ADMIN_PASSWORD) {
-      return { authorized: true, authorizedBy: "Campus Administrator" };
+    if (cleanId === ADMIN_ID) {
+      if (isAuthenticatedSession || cleanPass === ADMIN_PASSWORD) {
+        return { authorized: true, authorizedBy: "Campus Administrator" };
+      }
+      return { authorized: false, error: "Incorrect password for Campus Administrator." };
     }
 
     // 2. Original Reporter Resolution
     if (reportOwnerId && cleanId === reportOwnerId.trim()) {
+      if (isAuthenticatedSession) {
+        return { authorized: true, authorizedBy: `Verified Reporter (ID #${cleanId})` };
+      }
       const map = getUsersMap();
       const user = map.get(cleanId);
       if (user) {
