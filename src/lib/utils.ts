@@ -42,26 +42,25 @@ export function timeAgo(dateString: string): string {
 
 export function getCategoryBadge(category: string): { bg: string; text: string; border: string } {
   const map: Record<string, { bg: string; text: string; border: string }> = {
-    Electronics: { bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/20" },
-    "Wallets & Cards": { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/20" },
-    Keys: { bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400", border: "border-yellow-500/20" },
-    "Bags & Backpacks": { bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400", border: "border-purple-500/20" },
-    "Pets & Animals": { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/20" },
-    "Jewelry & Watches": { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", border: "border-rose-500/20" },
-    "Clothing & Accessories": { bg: "bg-indigo-500/10", text: "text-indigo-600 dark:text-indigo-400", border: "border-indigo-500/20" },
-    "Documents & IDs": { bg: "bg-cyan-500/10", text: "text-cyan-600 dark:text-cyan-400", border: "border-cyan-500/20" },
+    "Electronics & Laptops": { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
+    "Student IDs & Wallets": { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20" },
+    "Dorm & Car Keys": { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20" },
+    "Backpacks & Bags": { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20" },
+    "Calculators & Books": { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
+    "Watches & Jewelry": { bg: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/20" },
+    "Jackets & Apparel": { bg: "bg-indigo-500/10", text: "text-indigo-400", border: "border-indigo-500/20" },
   };
 
-  return map[category] || { bg: "bg-slate-500/10", text: "text-slate-600 dark:text-slate-400", border: "border-slate-500/20" };
+  return map[category] || { bg: "bg-slate-500/10", text: "text-slate-400", border: "border-slate-500/20" };
 }
 
 export function getScoreColor(score: number): { bg: string; text: string; ring: string; label: string } {
   if (score >= 80) {
-    return { bg: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-300", ring: "ring-emerald-500/30", label: "High Match" };
+    return { bg: "bg-emerald-500", text: "text-emerald-400", ring: "ring-emerald-500/30", label: "High Match" };
   } else if (score >= 50) {
-    return { bg: "bg-amber-500", text: "text-amber-700 dark:text-amber-300", ring: "ring-amber-500/30", label: "Possible Match" };
+    return { bg: "bg-amber-500", text: "text-amber-400", ring: "ring-amber-500/30", label: "Possible Match" };
   } else {
-    return { bg: "bg-slate-400", text: "text-slate-600 dark:text-slate-400", ring: "ring-slate-400/30", label: "Low Match" };
+    return { bg: "bg-slate-400", text: "text-slate-400", ring: "ring-slate-400/30", label: "Low Match" };
   }
 }
 
@@ -85,7 +84,6 @@ export function computeCosineSimilarity(a: number[], b: number[]): number {
 
 /**
  * Generates a 768-dimensional deterministic semantic-hash embedding
- * Used as high-quality local fallback if Gemini Embedding API is not configured or in offline mode.
  */
 export function generateDeterministicEmbedding(text: string, dimensions = 768): number[] {
   const normalized = (text || "").toLowerCase().trim();

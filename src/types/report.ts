@@ -2,14 +2,13 @@ export type ReportType = "lost" | "found";
 export type ReportStatus = "active" | "matched" | "resolved";
 
 export type ItemCategory =
-  | "Electronics"
-  | "Wallets & Cards"
-  | "Keys"
-  | "Bags & Backpacks"
-  | "Pets & Animals"
-  | "Jewelry & Watches"
-  | "Clothing & Accessories"
-  | "Documents & IDs"
+  | "Electronics & Laptops"
+  | "Student IDs & Wallets"
+  | "Dorm & Car Keys"
+  | "Backpacks & Bags"
+  | "Calculators & Books"
+  | "Watches & Jewelry"
+  | "Jackets & Apparel"
   | "Other";
 
 export interface ReportAttributes {

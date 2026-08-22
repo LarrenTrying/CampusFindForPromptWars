@@ -19,14 +19,13 @@ import {
 
 const CATEGORIES: (ItemCategory | "All")[] = [
   "All",
-  "Electronics",
-  "Wallets & Cards",
-  "Keys",
-  "Bags & Backpacks",
-  "Pets & Animals",
-  "Jewelry & Watches",
-  "Clothing & Accessories",
-  "Documents & IDs",
+  "Electronics & Laptops",
+  "Student IDs & Wallets",
+  "Dorm & Car Keys",
+  "Backpacks & Bags",
+  "Calculators & Books",
+  "Watches & Jewelry",
+  "Jackets & Apparel",
   "Other",
 ];
 

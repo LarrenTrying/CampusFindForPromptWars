@@ -19,22 +19,21 @@ import {
 
 const SAMPLE_QUERIES = [
   "Space gray Apple MacBook with tech stickers left in library",
-  "Brown leather wallet with driver license and red stitching",
-  "Golden retriever with blue collar roaming near river trail",
-  "AirPods Pro in olive green case with brass carabiner",
-  "Toyota car key fob with blue Stitch keychain",
+  "Rose Gold TI-84 Plus CE graphing calculator in Science Hall",
+  "Brown leather Fossil wallet with student ID at Student Union",
+  "AirPods Pro in olive green case with brass carabiner at gym",
+  "Dorm room keys and Toyota fob with blue Stitch keychain",
 ];
 
 const CATEGORIES: (ItemCategory | "All")[] = [
   "All",
-  "Electronics",
-  "Wallets & Cards",
-  "Keys",
-  "Bags & Backpacks",
-  "Pets & Animals",
-  "Jewelry & Watches",
-  "Clothing & Accessories",
-  "Documents & IDs",
+  "Electronics & Laptops",
+  "Student IDs & Wallets",
+  "Dorm & Car Keys",
+  "Backpacks & Bags",
+  "Calculators & Books",
+  "Watches & Jewelry",
+  "Jackets & Apparel",
   "Other",
 ];
 
