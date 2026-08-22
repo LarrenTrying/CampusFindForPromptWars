@@ -348,7 +348,7 @@ export const MockDb = {
   matchOppositeReports(
     queryEmbedding: number[],
     targetType: ReportType,
-    threshold = 0.2,
+    threshold = 0.05,
     limit = 8
   ): { report: Report; similarity: number }[] {
     const list = getDatabase();

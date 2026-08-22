@@ -90,8 +90,8 @@ async function handleMatchProcess(reportId: string) {
       const { data, error } = await supabase.rpc("match_opposite_reports", {
         query_embedding: sourceReport.embedding,
         target_type: targetType,
-        match_threshold: 0.15,
-        match_count: 6,
+        match_threshold: 0.05,
+        match_count: 8,
       });
 
       if (!error && data && data.length > 0) {
@@ -108,8 +108,8 @@ async function handleMatchProcess(reportId: string) {
     candidatePairs = MockDb.matchOppositeReports(
       sourceReport.embedding,
       targetType,
-      0.15,
-      6
+      0.05,
+      8
     );
   }
 

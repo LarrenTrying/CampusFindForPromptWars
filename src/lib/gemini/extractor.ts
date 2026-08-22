@@ -12,7 +12,6 @@ export async function extractAttributesFromInput(params: {
 
   if (genAI) {
     try {
-      // Try gemini-2.5-flash or gemini-1.5-flash
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
         generationConfig: {
@@ -22,7 +21,7 @@ export async function extractAttributesFromInput(params: {
       });
 
       const promptText = `
-You are an expert lost-and-found investigator and forensic multimodal analyzer.
+You are an expert campus lost-and-found investigator and forensic multimodal analyzer.
 Analyze the following lost/found item report details and any attached image:
 
 TITLE: ${params.title}
@@ -30,16 +29,21 @@ DESCRIPTION: ${params.description}
 CATEGORY HINT: ${params.category || "Unknown"}
 LOCATION: ${params.location || "Unknown"}
 
+IMPORTANT EXTRACTION RULES:
+- ONLY extract materials that are explicitly mentioned in the description or clearly evident in the photo.
+- NEVER assume or hallucinate 'Glass' for water bottles, tumblers, or flasks unless the user specifically wrote 'glass'. If material is unmentioned, use ['Stainless Steel / Aluminum / Plastic (Unspecified)'].
+- Identify item category: "Electronics & Laptops" | "Student IDs & Wallets" | "Bottles, Mugs & Drinkware" | "Dorm & Car Keys" | "Backpacks & Bags" | "Calculators & Books" | "Watches & Jewelry" | "Jackets & Apparel" | "Other"
+
 Extract precise structured attributes in valid JSON conforming to this schema:
 {
-  "category": "Electronics" | "Wallets & Cards" | "Keys" | "Bags & Backpacks" | "Pets & Animals" | "Jewelry & Watches" | "Clothing & Accessories" | "Documents & IDs" | "Other",
-  "item_type": string (e.g., "Laptop", "Bi-fold Wallet", "Dog", "Car Key Fob", "Backpack"),
-  "brand": string or null (e.g., "Apple", "Fossil", "Toyota", "Nike"),
-  "model": string or null (e.g., "MacBook Air M2 13-inch", "AirPods Pro", "RAV4"),
-  "primary_color": string (e.g., "Space Gray", "Brown", "Golden / Yellow", "Black"),
-  "secondary_colors": string[] (e.g., ["Red", "White", "Silver"]),
-  "materials": string[] (e.g., ["Aluminum", "Leather", "Silicone", "Fur", "Metal"]),
-  "identifying_marks": string[] (specific distinct marks, stickers, engraving, scratches, accessories, collar tags, embroidery),
+  "category": string,
+  "item_type": string (e.g., "Water Bottle", "Laptop", "Bi-fold Wallet", "Graphing Calculator", "Car Key Fob", "Backpack"),
+  "brand": string or null (e.g., "Hydro Flask", "Stanley", "Yeti", "Owala", "Apple", "Texas Instruments", "Fossil", "Toyota"),
+  "model": string or null (e.g., "32oz Wide Mouth", "MacBook Air M2", "TI-84 Plus CE"),
+  "primary_color": string (e.g., "Blue", "Space Gray", "Brown", "Rose Gold", "Black", "Green"),
+  "secondary_colors": string[] (e.g., ["White", "Silver", "Black"]),
+  "materials": string[] (e.g., ["Stainless Steel", "Aluminum", "Plastic", "Leather", "Metal"]),
+  "identifying_marks": string[] (specific distinct marks, stickers, engraving, scratches, boot colors, straw lid, carabiners),
   "condition": "New" | "Good" | "Worn" | "Damaged" | "Unknown",
   "estimated_value_range": "Low" | "Medium" | "High",
   "keyword_tags": string[] (5-10 specific search keywords),
@@ -88,46 +92,57 @@ function fallbackAttributeExtractor(params: {
   let category = params.category || "Other";
   let itemType = "Item";
 
-  if (/macbook|laptop|dell|thinkpad|computer|ipad|tablet|iphone|android|phone|airpods|headphone|earbuds|camera|watch|apple watch/.test(combined)) {
-    category = "Electronics";
+  if (/bottle|flask|hydro flask|stanley|yeti|tumbler|mug|thermos|cup|nalgene|owala|canteen|s'well|contigo|drinkware/.test(combined)) {
+    category = "Bottles, Mugs & Drinkware";
+    if (/hydro flask/.test(combined)) itemType = "Hydro Flask Bottle";
+    else if (/stanley/.test(combined)) itemType = "Stanley Tumbler";
+    else if (/yeti/.test(combined)) itemType = "Yeti Tumbler / Bottle";
+    else if (/owala/.test(combined)) itemType = "Owala FreeSip Bottle";
+    else if (/mug|cup/.test(combined)) itemType = "Travel Mug / Cup";
+    else itemType = "Water Bottle";
+  } else if (/macbook|laptop|dell|thinkpad|computer|ipad|tablet|iphone|android|phone|airpods|headphone|earbuds|camera|watch|apple watch/.test(combined)) {
+    category = "Electronics & Laptops";
     if (/macbook|laptop|dell|thinkpad/.test(combined)) itemType = "Laptop";
     else if (/airpods|earbuds|headphone/.test(combined)) itemType = "Wireless Earbuds";
     else if (/iphone|phone|pixel|samsung/.test(combined)) itemType = "Smartphone";
     else itemType = "Electronic Device";
-  } else if (/wallet|purse|cardholder|driver license|credit card|id card|metro card/.test(combined)) {
-    category = "Wallets & Cards";
-    itemType = "Wallet / Cardholder";
-  } else if (/key|keychain|fob|car key|house key/.test(combined)) {
-    category = "Keys";
-    itemType = "Keys & Keychain";
-  } else if (/dog|cat|puppy|kitten|retriever|husky|poodle|pet|bird/.test(combined)) {
-    category = "Pets & Animals";
-    if (/dog|puppy|retriever/.test(combined)) itemType = "Dog";
-    else if (/cat|kitten/.test(combined)) itemType = "Cat";
-    else itemType = "Pet";
+  } else if (/calculator|ti-84|ti-83|casio|textbook|notebook|binder|book/.test(combined)) {
+    category = "Calculators & Books";
+    if (/calculator|ti-84|ti-83|casio/.test(combined)) itemType = "Graphing Calculator";
+    else itemType = "Textbook / Notebook";
+  } else if (/wallet|purse|cardholder|driver license|credit card|id card|student id|dining card/.test(combined)) {
+    category = "Student IDs & Wallets";
+    itemType = "Wallet / Student ID Card";
+  } else if (/key|keychain|fob|car key|house key|dorm key/.test(combined)) {
+    category = "Dorm & Car Keys";
+    itemType = "Dorm & Car Keys";
   } else if (/backpack|bag|tote|duffel|purse|luggage|suitcase/.test(combined)) {
-    category = "Bags & Backpacks";
+    category = "Backpacks & Bags";
     itemType = "Backpack / Bag";
   } else if (/ring|necklace|bracelet|watch|earring|gold|silver|diamond/.test(combined)) {
-    category = "Jewelry & Watches";
+    category = "Watches & Jewelry";
     itemType = "Jewelry / Watch";
+  } else if (/jacket|hoodie|sweater|coat|shirt|hat|cap/.test(combined)) {
+    category = "Jackets & Apparel";
+    itemType = "Jacket / Apparel";
   }
 
   // 2. Detect Brand
   let brand: string | undefined = undefined;
   const brandKeywords = [
+    "hydro flask", "stanley", "yeti", "owala", "nalgene", "camelbak", "s'well", "contigo",
     "apple", "samsung", "fossil", "sony", "nike", "adidas", "toyota", "honda", "ford", 
-    "bose", "dell", "lenovo", "hp", "gucci", "coach", "patagonia", "north face", "anker"
+    "bose", "dell", "lenovo", "hp", "texas instruments", "casio", "patagonia", "north face", "anker"
   ];
   for (const b of brandKeywords) {
     if (combined.includes(b)) {
-      brand = b.charAt(0).toUpperCase() + b.slice(1);
+      brand = b.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       break;
     }
   }
 
   // 3. Detect Colors
-  const colors = ["black", "space gray", "silver", "white", "brown", "tan", "red", "blue", "teal", "green", "olive", "gold", "pink", "purple", "yellow", "orange"];
+  const colors = ["blue", "sky blue", "navy", "dark blue", "light blue", "black", "space gray", "silver", "white", "brown", "tan", "red", "teal", "green", "olive", "rose gold", "pink", "purple", "yellow", "orange"];
   let primaryColor = "Unknown";
   const secondaryColors: string[] = [];
 
@@ -140,23 +155,33 @@ function fallbackAttributeExtractor(params: {
       }
     }
   }
-  if (primaryColor === "Unknown") primaryColor = "Standard / Natural";
+  if (primaryColor === "Unknown") primaryColor = "Standard";
 
   // 4. Distinct Marks
   const marks: string[] = [];
-  if (/sticker|octocat|openai|logo|decal/.test(combined)) marks.push("Contains stickers or custom decals");
-  if (/scratch|dent|crack|engrav|monogram/.test(combined)) marks.push("Has physical marks or engravings");
-  if (/collar|tag|carabiner|keychain|charm/.test(combined)) marks.push("Includes attached tag, charm, or accessory");
+  if (/sticker|decal|logo|graphic/.test(combined)) marks.push("Has stickers / decals");
+  if (/scratch|dent|scuff|engrav/.test(combined)) marks.push("Has physical marks / scratches");
+  if (/boot|silicone boot|handle|strap|carabiner|keychain|charm/.test(combined)) marks.push("Has attached accessory or silicone boot");
+  if (/straw|straw lid|chug cap|wide mouth/.test(combined)) marks.push("Specific lid/cap style");
 
-  // 5. Materials
+  // 5. Materials (Never default to Glass for bottles unless explicitly stated)
   const materials: string[] = [];
+  if (/glass/.test(combined)) materials.push("Glass");
+  if (/stainless steel|metal|aluminum|steel/.test(combined)) materials.push("Stainless Steel / Metal");
   if (/leather/.test(combined)) materials.push("Leather");
-  if (/aluminum|metal|steel/.test(combined)) materials.push("Metal / Aluminum");
-  if (/silicone|rubber|plastic/.test(combined)) materials.push("Silicone / Plastic");
-  if (/fur|nylon|fabric|canvas/.test(combined)) materials.push("Fabric / Fur");
+  if (/silicone|rubber|plastic/.test(combined)) materials.push("Plastic / Silicone");
+  if (/fabric|canvas|nylon/.test(combined)) materials.push("Fabric / Nylon");
+
+  if (materials.length === 0) {
+    if (category === "Bottles, Mugs & Drinkware") {
+      materials.push("Stainless Steel / Metal / Plastic (Standard)");
+    } else {
+      materials.push("Standard Material");
+    }
+  }
 
   // 6. Tags
-  const words = combined.split(/\W+/).filter(w => w.length > 3);
+  const words = combined.split(/\W+/).filter(w => w.length > 2);
   const keywordTags = Array.from(new Set([...words.slice(0, 6), itemType.toLowerCase(), primaryColor.toLowerCase()]));
 
   return {
@@ -165,11 +190,11 @@ function fallbackAttributeExtractor(params: {
     brand,
     primary_color: primaryColor,
     secondary_colors: secondaryColors.length > 0 ? secondaryColors : undefined,
-    materials: materials.length > 0 ? materials : ["Standard Material"],
+    materials: materials,
     identifying_marks: marks.length > 0 ? marks : ["Standard appearance"],
     condition: "Good",
-    estimated_value_range: category === "Electronics" || category === "Jewelry & Watches" ? "High" : "Medium",
+    estimated_value_range: category === "Electronics & Laptops" || category === "Watches & Jewelry" ? "High" : "Medium",
     keyword_tags: keywordTags,
-    enhanced_summary: `${primaryColor} ${brand ? brand + " " : ""}${itemType} with distinct features reported at ${params.location || "campus/city area"}.`,
+    enhanced_summary: `${primaryColor} ${brand ? brand + " " : ""}${itemType} reported at ${params.location || "campus area"}.`,
   };
 }

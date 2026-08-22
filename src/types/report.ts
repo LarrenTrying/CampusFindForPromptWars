@@ -4,6 +4,7 @@ export type ReportStatus = "active" | "matched" | "resolved";
 export type ItemCategory =
   | "Electronics & Laptops"
   | "Student IDs & Wallets"
+  | "Bottles, Mugs & Drinkware"
   | "Dorm & Car Keys"
   | "Backpacks & Bags"
   | "Calculators & Books"
