@@ -7,6 +7,7 @@ import { AttributeBadge } from "@/components/AttributeBadge";
 import { MatchCard } from "@/components/MatchCard";
 import { formatDate, timeAgo, getCategoryBadge } from "@/lib/utils";
 import confetti from "canvas-confetti";
+import { ClaimModal } from "@/components/ClaimModal";
 import {
   Sparkles,
   ArrowLeft,
@@ -20,7 +21,8 @@ import {
   Share2,
   Check,
   RefreshCw,
-  Eye
+  Eye,
+  Lock
 } from "lucide-react";
 
 export default function ReportDetailPage() {
@@ -31,7 +33,7 @@ export default function ReportDetailPage() {
   const [matchData, setMatchData] = useState<MatchResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [matchingLoading, setMatchingLoading] = useState(false);
-  const [resolving, setResolving] = useState(false);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const fetchReportAndMatches = async () => {
@@ -64,34 +66,6 @@ export default function ReportDetailPage() {
       fetchReportAndMatches();
     }
   }, [reportId]);
-
-  const handleResolve = async () => {
-    if (!report) return;
-    setResolving(true);
-    try {
-      const newStatus = report.status === "resolved" ? "active" : "resolved";
-      const res = await fetch(`/api/reports/${report.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setReport(data.report);
-        if (newStatus === "resolved") {
-          confetti({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.6 },
-          });
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setResolving(false);
-    }
-  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -131,6 +105,14 @@ export default function ReportDetailPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Back Link & Quick Actions */}
+      <ClaimModal
+        isOpen={isClaimModalOpen}
+        onClose={() => setIsClaimModalOpen(false)}
+        reportId={report.id}
+        reportTitle={report.title}
+        onSuccess={() => fetchReportAndMatches()}
+      />
+
       <div className="flex items-center justify-between">
         <a
           href="/"
@@ -149,18 +131,15 @@ export default function ReportDetailPage() {
             <span>{copied ? "Link Copied!" : "Share"}</span>
           </button>
 
-          <button
-            onClick={handleResolve}
-            disabled={resolving}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-md ${
-              isResolved
-                ? "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
-            }`}
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>{isResolved ? "Reopen Report" : "Mark as Resolved"}</span>
-          </button>
+          {!isResolved && (
+            <button
+              onClick={() => setIsClaimModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-md bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Verify & Resolve Case</span>
+            </button>
+          )}
         </div>
       </div>
 

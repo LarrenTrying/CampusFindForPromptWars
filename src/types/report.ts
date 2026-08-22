@@ -38,6 +38,7 @@ export interface Report {
   date_time: string;
   contact_name: string;
   contact_info: string;
+  secret_pin?: string;
   status: ReportStatus;
   attributes: ReportAttributes;
   embedding?: number[] | null;
@@ -56,6 +57,7 @@ export interface CreateReportInput {
   date_time: string;
   contact_name: string;
   contact_info: string;
+  secret_pin?: string;
   custom_attributes?: Partial<ReportAttributes>;
 }
 

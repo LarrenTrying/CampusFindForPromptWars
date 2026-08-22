@@ -98,6 +98,9 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     // 3. Generate 768-d embedding
     const embedding = await getEmbedding(embeddingText);
 
+    // Auto-generate 4-digit secret PIN if not provided
+    const secretPin = body.secret_pin || Math.floor(1000 + Math.random() * 9000).toString();
+
     // 4. Save to Supabase pgvector or MockDb
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
@@ -112,6 +115,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           date_time: body.date_time || new Date().toISOString(),
           contact_name: body.contact_name,
           contact_info: body.contact_info,
+          secret_pin: secretPin,
           status: "active",
           attributes: {
             ...extractedAttributes,
@@ -130,6 +134,7 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           return NextResponse.json({
             success: true,
             report: data,
+            secret_pin: secretPin,
             source: "supabase",
           });
         }
@@ -138,11 +143,16 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     }
 
     // Save to MockDb
-    const newReport = MockDb.createReport(body, extractedAttributes, embedding);
+    const newReport = MockDb.createReport(
+      { ...body, secret_pin: secretPin },
+      extractedAttributes,
+      embedding
+    );
 
     return NextResponse.json({
       success: true,
       report: newReport,
+      secret_pin: secretPin,
       source: "mock_db",
     });
   } catch (error: any) {

@@ -90,6 +90,7 @@ function SubmitFormContent() {
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [extractedAttributes, setExtractedAttributes] = useState<ReportAttributes | null>(null);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
+  const [createdReportPin, setCreatedReportPin] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,6 +156,7 @@ function SubmitFormContent() {
 
       setExtractedAttributes(data.report.attributes);
       setCreatedReportId(data.report.id);
+      setCreatedReportPin(data.secret_pin || data.report.secret_pin || "8492");
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during report submission.");
     } finally {
@@ -264,24 +266,19 @@ function SubmitFormContent() {
             </div>
           )}
 
-          <div className="flex items-center gap-3 pt-1">
-            <a
-              href={`/reports/${createdReportId}`}
-              className="text-xs font-semibold text-slate-300 hover:text-white underline"
-            >
-              View Report Details
-            </a>
-            <span className="text-slate-600">•</span>
-            <button
-              onClick={() => {
-                setCreatedReportId(null);
-                setTitle("");
-                setDescription("");
-              }}
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300"
-            >
-              Submit Another Report
-            </button>
+          {/* Secret PIN Box */}
+          <div className="p-4 rounded-xl bg-slate-900 border border-indigo-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                <span>🔐 Reporter Secret Claim PIN</span>
+              </span>
+              <p className="text-[11px] text-slate-400">
+                Save this PIN! You will need it to authorize and resolve matches for this item.
+              </p>
+            </div>
+            <div className="px-4 py-2 rounded-xl bg-slate-950 border border-indigo-500/50 text-base font-mono font-extrabold text-indigo-300 tracking-wider">
+              {createdReportPin || "8492"}
+            </div>
           </div>
         </div>
       )}
