@@ -153,7 +153,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#C5B3D3] hover:bg-[#b8a3c8] text-plum-950 border border-[#ab92bf] shadow-sm transition"
           >
             <Sparkles className="w-3.5 h-3.5 text-plum-900" />
-            <span>Find {isLost ? "Found" : "Lost"} Matches</span>
+            <span>Check AI Matches</span>
           </a>
 
           <a

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { data, error } = await dbQuery;
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           return NextResponse.json(
             { success: true, reports: data, source: "supabase" },
             { headers: { "Cache-Control": "no-store, max-age=0" } }

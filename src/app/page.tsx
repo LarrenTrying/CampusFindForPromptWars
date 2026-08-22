@@ -98,6 +98,7 @@ export default function HomePage() {
       console.error(err);
     } finally {
       setLoading(false);
+      fetchStats();
     }
   };
 
@@ -323,6 +324,24 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Active Section Summary Header */}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-2 text-xs font-bold text-plum-900">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#C5B3D3] border border-[#ab92bf]" />
+          <span>
+            {activeTab === "active_all" && `All Active Reports (${reports.length} items • ${stats.lost} Lost, ${stats.found} Found)`}
+            {activeTab === "lost" && `Active Lost Reports (${reports.length} ${reports.length === 1 ? "item" : "items"})`}
+            {activeTab === "found" && `Active Found Reports (${reports.length} ${reports.length === 1 ? "item" : "items"})`}
+            {activeTab === "resolved" && `Reunited Cases Archive (${reports.length} ${reports.length === 1 ? "case" : "cases"} solved)`}
+          </span>
+        </div>
+        {categoryFilter !== "All" && (
+          <span className="text-[11px] font-semibold text-plum-700 bg-[#FFE2E2] px-2.5 py-0.5 rounded-full border border-[#F5CBCB]">
+            Category: {categoryFilter}
+          </span>
+        )}
+      </div>
 
       {/* Reports Grid */}
       {loading ? (
