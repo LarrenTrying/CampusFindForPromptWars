@@ -72,7 +72,7 @@ const PRESETS = [
 function SubmitFormContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ReportType) || "lost";
-  const { user, loginWithGoogle, isAdmin } = useAuth();
+  const { user, loginWithGoogle, loginWithCustomEmail, isAdmin } = useAuth();
 
   const [type, setType] = useState<ReportType>(initialType);
   const [title, setTitle] = useState("");
@@ -87,10 +87,10 @@ function SubmitFormContent() {
   const [imageUrl, setImageUrl] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
-  // Inline Google login state
   const [googleEmailInput, setGoogleEmailInput] = useState("");
   const [googleNameInput, setGoogleNameInput] = useState("");
   const [googleLoggingIn, setGoogleLoggingIn] = useState(false);
+  const [googleOAuthError, setGoogleOAuthError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
@@ -99,17 +99,27 @@ function SubmitFormContent() {
   const [createdReportEmail, setCreatedReportEmail] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    if (user) {
-      if (user.name) setContactName(user.name);
-      if (user.email) setContactInfo(user.email);
+  const handleRealGoogleOAuth = async () => {
+    setGoogleLoggingIn(true);
+    setGoogleOAuthError("");
+    try {
+      await loginWithGoogle();
+    } catch (err: any) {
+      console.warn("Google OAuth popup notice:", err.message);
+      setGoogleOAuthError(
+        err.message?.includes("provider is not enabled")
+          ? "Google OAuth is not yet enabled in your Supabase project dashboard. You can enable it under Auth > Providers > Google, or sign in below with your Google email."
+          : (err.message || "Failed to initialize Google Sign-In.")
+      );
+    } finally {
+      setGoogleLoggingIn(false);
     }
-  }, [user]);
+  };
 
-  const handleGoogleLoginSubmit = async (overrideEmail?: string, overrideName?: string) => {
+  const handleCustomEmailSubmit = async (overrideEmail?: string, overrideName?: string) => {
     setGoogleLoggingIn(true);
     try {
-      await loginWithGoogle(overrideEmail || googleEmailInput, overrideName || googleNameInput);
+      await loginWithCustomEmail(overrideEmail || googleEmailInput, overrideName || googleNameInput);
     } finally {
       setGoogleLoggingIn(false);
     }
@@ -247,7 +257,7 @@ function SubmitFormContent() {
             {/* Primary Continue with Google Button */}
             <button
               type="button"
-              onClick={() => handleGoogleLoginSubmit()}
+              onClick={handleRealGoogleOAuth}
               disabled={googleLoggingIn}
               className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm shadow-xl flex items-center justify-center gap-3 transition active:scale-98"
             >
@@ -269,8 +279,14 @@ function SubmitFormContent() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>{googleLoggingIn ? "Connecting to Google..." : "Continue with Google Mail"}</span>
+              <span>{googleLoggingIn ? "Redirecting to Google..." : "Continue with Google (accounts.google.com)"}</span>
             </button>
+
+            {googleOAuthError && (
+              <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs">
+                {googleOAuthError}
+              </div>
+            )}
 
             <div className="flex items-center gap-2 pt-1">
               <div className="flex-1 h-[1px] bg-slate-800" />
@@ -281,7 +297,7 @@ function SubmitFormContent() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleGoogleLoginSubmit();
+                if (googleEmailInput) handleCustomEmailSubmit(googleEmailInput, googleNameInput);
               }}
               className="space-y-3"
             >
@@ -290,6 +306,7 @@ function SubmitFormContent() {
                 value={googleEmailInput}
                 onChange={(e) => setGoogleEmailInput(e.target.value)}
                 placeholder="your.email@gmail.com"
+                required
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
               <button

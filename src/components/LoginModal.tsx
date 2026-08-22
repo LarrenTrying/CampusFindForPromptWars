@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAuth, ADMIN_EMAILS } from "@/context/AuthContext";
-import { X, Mail, ShieldCheck, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { X, Mail, ShieldCheck, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,20 +10,38 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const { loginWithGoogle, user } = useAuth();
+  const { loginWithGoogle, loginWithCustomEmail, user } = useAuth();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleGoogleSignIn = async (overrideEmail?: string, overrideName?: string) => {
+  const handleRealGoogleOAuth = async () => {
     setLoading(true);
+    setErrorMsg("");
     try {
-      const targetEmail = overrideEmail || email || "student@gmail.com";
-      const targetName = overrideName || name;
-      await loginWithGoogle(targetEmail, targetName);
+      await loginWithGoogle();
+      // Browser will redirect to accounts.google.com
+    } catch (err: any) {
+      console.warn("Google OAuth popup / redirect notice:", err.message);
+      setErrorMsg(
+        err.message?.includes("provider is not enabled")
+          ? "Google OAuth provider is not yet enabled in your Supabase Auth dashboard. You can enable it in Supabase > Auth > Providers, or sign in below with your Google email."
+          : (err.message || "Failed to initialize Google Sign-In.")
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomEmailSignIn = async (targetEmail: string, targetName?: string) => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      await loginWithCustomEmail(targetEmail, targetName);
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -46,7 +64,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md">
+          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md shrink-0">
             {/* Google "G" SVG */}
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
@@ -72,7 +90,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               Sign in with Google Mail
             </h3>
             <p className="text-xs text-slate-400">
-              Authenticate your campus account to submit and resolve reports.
+              Direct Google authentication for reporting and claiming items.
             </p>
           </div>
         </div>
@@ -86,14 +104,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Primary Google One-Click Button */}
+            {/* Primary Google Real OAuth Button */}
             <button
               type="button"
-              onClick={() => handleGoogleSignIn()}
+              onClick={handleRealGoogleOAuth}
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm shadow-xl flex items-center justify-center gap-3 transition active:scale-98"
+              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm shadow-xl flex items-center justify-center gap-3 transition active:scale-98 disabled:opacity-70"
             >
-              {/* Google G logo */}
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -112,13 +129,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>{loading ? "Connecting to Google..." : "Continue with Google"}</span>
+              <span>{loading ? "Redirecting to Google..." : "Continue with Google (accounts.google.com)"}</span>
             </button>
 
-            <div className="flex items-center gap-2 pt-2">
+            {errorMsg && (
+              <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Google Provider Setup Notice</span>
+                </div>
+                <p className="text-[11px] text-amber-200/90 leading-relaxed">{errorMsg}</p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
               <div className="flex-1 h-[1px] bg-slate-800" />
               <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                Or Sign In with Specific Gmail
+                Or Direct Sign In with Your Gmail
               </span>
               <div className="flex-1 h-[1px] bg-slate-800" />
             </div>
@@ -127,19 +154,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleGoogleSignIn(email, name);
+                if (email) handleCustomEmailSignIn(email, name);
               }}
               className="space-y-3"
             >
               <div className="space-y-1">
                 <label className="block text-xs font-semibold text-slate-300">
-                  Google Mail Address
+                  Enter Your Google Mail Address
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.name@gmail.com or @campus.edu"
+                  placeholder="your.email@gmail.com"
+                  required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
@@ -161,35 +189,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 type="submit"
                 className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition active:scale-98"
               >
-                Sign In with this Google Account
+                Sign In with this Google Email
               </button>
             </form>
 
-            {/* Demo / Admin Quick Logins */}
-            <div className="pt-2 border-t border-slate-800/80 space-y-2">
-              <span className="text-[11px] font-semibold text-slate-400 block">Quick Demo Logins:</span>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleGoogleSignIn("sarah.lin@gmail.com", "Sarah Lin")}
-                  className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-left text-slate-300 transition"
-                >
-                  <div className="font-semibold text-white">Sarah Lin</div>
-                  <div className="text-[10px] text-slate-500 truncate">sarah.lin@gmail.com</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleGoogleSignIn("campusadmin@gmail.com", "Campus Administrator")}
-                  className="p-2 rounded-xl bg-amber-950/20 hover:bg-amber-950/40 border border-amber-500/30 text-[11px] text-left text-amber-200 transition"
-                >
-                  <div className="font-semibold text-amber-300 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" />
-                    Admin
-                  </div>
-                  <div className="text-[10px] text-amber-400/70 truncate">campusadmin@gmail.com</div>
-                </button>
-              </div>
+            {/* Admin Demo Login */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => handleCustomEmailSignIn("campusadmin@gmail.com", "Campus Administrator")}
+                className="w-full p-2.5 rounded-xl bg-amber-950/20 hover:bg-amber-950/40 border border-amber-500/30 text-xs text-left text-amber-200 transition flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span className="font-semibold text-amber-300">Campus Admin Demo Login</span>
+                </div>
+                <span className="text-[11px] font-mono text-amber-400/80">campusadmin@gmail.com</span>
+              </button>
             </div>
           </div>
         )}
