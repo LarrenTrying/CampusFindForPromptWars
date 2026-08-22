@@ -1,30 +1,31 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ReportType, ItemCategory, ReportAttributes } from "@/types/report";
-import { AttributeBadge } from "@/components/AttributeBadge";
+import { useAuth, ADMIN_CAMPUS_ID } from "@/context/AuthContext";
+import { LoginModal } from "@/components/LoginModal";
 import {
   Sparkles,
   Upload,
-  Camera,
+  Image as ImageIcon,
   MapPin,
   Calendar,
   User,
-  Phone,
   Tag,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
   RefreshCw,
-  Image as ImageIcon,
-  HelpCircle,
-  FileText
+  ArrowRight,
+  Lock,
+  ShieldCheck,
+  Key
 } from "lucide-react";
 
 const CATEGORIES: ItemCategory[] = [
   "Electronics & Laptops",
   "Student IDs & Wallets",
+  "Bottles, Mugs & Drinkware",
   "Dorm & Car Keys",
   "Backpacks & Bags",
   "Calculators & Books",
@@ -69,12 +70,10 @@ const PRESETS = [
   },
 ];
 
-import { useAuth } from "@/context/AuthContext";
-
 function SubmitFormContent() {
   const searchParams = useSearchParams();
   const initialType = (searchParams.get("type") as ReportType) || "lost";
-  const { user } = useAuth();
+  const { user, login, isAdmin } = useAuth();
 
   const [type, setType] = useState<ReportType>(initialType);
   const [title, setTitle] = useState("");
@@ -86,10 +85,14 @@ function SubmitFormContent() {
   );
   const [contactName, setContactName] = useState(user?.name || "");
   const [contactInfo, setContactInfo] = useState("");
-  const [campusId, setCampusId] = useState(user?.campus_id || "");
-  const [pin, setPin] = useState(user?.pin || "");
   const [imageUrl, setImageUrl] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+  // Inline login state if not logged in
+  const [loginCampusId, setLoginCampusId] = useState("");
+  const [loginPin, setLoginPin] = useState("");
+  const [loginName, setLoginName] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
@@ -98,6 +101,32 @@ function SubmitFormContent() {
   const [createdReportPin, setCreatedReportPin] = useState<string | null>(null);
   const [createdReportCampusId, setCreatedReportCampusId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (user?.name && !contactName) {
+      setContactName(user.name);
+    }
+  }, [user]);
+
+  const handleInlineLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+
+    if (!/^\d{5}$/.test(loginCampusId.trim())) {
+      setLoginError("Campus ID must be exactly a 5-digit number (e.g. 90421 or 43554 for Admin).");
+      return;
+    }
+
+    if (!loginPin || loginPin.length < 3) {
+      setLoginError("PIN must be at least 3 characters.");
+      return;
+    }
+
+    const ok = login(loginCampusId, loginPin, loginName);
+    if (!ok) {
+      setLoginError("Login failed. Please check your 5-digit ID.");
+    }
+  };
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,26 +149,19 @@ function SubmitFormContent() {
     setImageBase64(null);
     setContactName(preset.name);
     setContactInfo(preset.contact);
-    setCampusId(user?.campus_id || "90421");
-    setPin(user?.pin || "1234");
     setExtractedAttributes(null);
     setCreatedReportId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setErrorMsg("You must be logged in with your 5-digit Campus ID to submit a report.");
+      return;
+    }
+
     if (!title || !description || !location || !contactName) {
       setErrorMsg("Please fill out all required fields.");
-      return;
-    }
-
-    if (!campusId || !/^\d{5}$/.test(campusId.trim())) {
-      setErrorMsg("Please provide your valid 5-digit Campus ID number (e.g. 90421).");
-      return;
-    }
-
-    if (!pin || pin.length < 3) {
-      setErrorMsg("Please choose a security PIN of at least 3 characters so you can resolve this item later.");
       return;
     }
 
@@ -158,10 +180,10 @@ function SubmitFormContent() {
         location,
         date_time: new Date(dateTime).toISOString(),
         contact_name: contactName,
-        contact_info: contactInfo || `Student #${campusId}`,
-        reporter_campus_id: campusId.trim(),
-        reporter_pin: pin.trim(),
-        secret_pin: pin.trim(),
+        contact_info: contactInfo || `Campus ID #${user.campus_id}`,
+        reporter_campus_id: user.campus_id,
+        reporter_pin: user.pin || "1234",
+        secret_pin: user.pin || "1234",
       };
 
       const res = await fetch("/api/reports", {
@@ -177,8 +199,8 @@ function SubmitFormContent() {
 
       setExtractedAttributes(data.report.attributes);
       setCreatedReportId(data.report.id);
-      setCreatedReportPin(pin.trim());
-      setCreatedReportCampusId(campusId.trim());
+      setCreatedReportPin(user.pin || "1234");
+      setCreatedReportCampusId(user.campus_id);
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during report submission.");
     } finally {
@@ -203,414 +225,470 @@ function SubmitFormContent() {
         </p>
       </div>
 
-      {/* Quick Presets for Demo / Testing */}
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center gap-3">
-        <span className="text-xs font-semibold text-slate-400">Quick Test Presets:</span>
-        {PRESETS.map((preset) => (
-          <button
-            key={preset.label}
-            type="button"
-            onClick={() => applyPreset(preset)}
-            className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-          >
-            ⚡ {preset.label}
-          </button>
-        ))}
-      </div>
+      {/* Mandatory Authentication Gate if Not Logged In */}
+      {!user ? (
+        <div className="glass-panel rounded-3xl p-8 border border-indigo-500/30 bg-slate-900/90 shadow-2xl space-y-6 animate-fadeIn">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
+              <Lock className="w-6 h-6 text-indigo-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">
+                Campus Login Required
+              </h2>
+              <p className="text-xs text-slate-300">
+                Please sign in with your <strong className="text-indigo-300">5-digit Campus ID</strong> and PIN to submit and track your report.
+              </p>
+            </div>
+          </div>
 
-      {/* Success Modal / Banner */}
-      {createdReportId && (
-        <div className="p-6 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-5 animate-fadeIn">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+          <form onSubmit={handleInlineLogin} className="space-y-4 max-w-md">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-300">
+                  5-Digit Campus ID Number <span className="text-rose-400">*</span>
+                </label>
+                {loginCampusId.trim() === ADMIN_CAMPUS_ID && (
+                  <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                    Admin ID 43554
+                  </span>
+                )}
               </div>
+              <input
+                type="text"
+                maxLength={5}
+                value={loginCampusId}
+                onChange={(e) => setLoginCampusId(e.target.value.replace(/\D/g, ""))}
+                placeholder="e.g. 90421 (or 43554 for Admin)"
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm font-mono tracking-widest text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Security PIN <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="password"
+                value={loginPin}
+                onChange={(e) => setLoginPin(e.target.value)}
+                placeholder="Enter a PIN to authorize your reports"
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Your Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={loginName}
+                onChange={(e) => setLoginName(e.target.value)}
+                placeholder="e.g. Sarah Lin"
+                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {loginError && (
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition active:scale-98"
+            >
+              Sign In to Continue
+            </button>
+          </form>
+        </div>
+      ) : (
+        <>
+          {/* User Status Banner */}
+          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              {isAdmin ? (
+                <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0" />
+              ) : (
+                <User className="w-5 h-5 text-indigo-400 shrink-0" />
+              )}
               <div>
-                <h3 className="text-base font-bold text-emerald-300">
-                  Report Created & Embedded in Supabase pgvector!
-                </h3>
-                <p className="text-xs text-slate-300">
-                  Gemini multimodal analysis successfully extracted structured forensic attributes and 768-d embedding vector.
+                <span className="font-bold text-white block">
+                  Logged in as {isAdmin ? "Campus Administrator (ID: 43554)" : `Student ID #${user.campus_id}`}
+                </span>
+                <span className="text-slate-400">
+                  This report will be registered under your ID and can only be resolved by you or Admin 43554.
+                </span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-indigo-900/60 font-mono font-bold text-indigo-300 border border-indigo-500/30 shrink-0">
+              ID #{user.campus_id}
+            </span>
+          </div>
+
+          {/* Quick Presets for Demo / Testing */}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-semibold text-slate-400">Quick Test Presets:</span>
+            {PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              >
+                ⚡ {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Success Modal / Banner */}
+          {createdReportId && (
+            <div className="p-6 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-5 animate-fadeIn">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-emerald-300">
+                      Report Created & Embedded in Supabase pgvector!
+                    </h3>
+                    <p className="text-xs text-slate-300">
+                      Registered under <strong className="text-indigo-300 font-mono">Campus ID #{createdReportCampusId}</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href={`/match?reportId=${createdReportId}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 transition"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Find AI Matches Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
+              {/* AI Extracted Attributes Breakdown */}
+              {extractedAttributes && (
+                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Extracted Structured Attributes (Gemini Flash)</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">Brand</span>
+                      <span className="font-semibold text-slate-200">{extractedAttributes.brand || "N/A"}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">Primary Color</span>
+                      <span className="font-semibold text-cyan-300">{extractedAttributes.primary_color || "N/A"}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">Item Type</span>
+                      <span className="font-semibold text-slate-200">{extractedAttributes.item_type || "N/A"}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">Condition</span>
+                      <span className="font-semibold text-emerald-300">{extractedAttributes.condition || "N/A"}</span>
+                    </div>
+                  </div>
+
+                  {extractedAttributes.identifying_marks && extractedAttributes.identifying_marks.length > 0 && (
+                    <div className="text-xs text-slate-300">
+                      <span className="text-slate-400 font-medium">Distinct Marks: </span>
+                      <span className="text-amber-300">{extractedAttributes.identifying_marks.join("; ")}</span>
+                    </div>
+                  )}
+
+                  {extractedAttributes.enhanced_summary && (
+                    <div className="text-xs text-slate-400 italic">
+                      &ldquo;{extractedAttributes.enhanced_summary}&rdquo;
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Main Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Lost vs Found Toggle */}
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setType("lost")}
+                className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition ${
+                  type === "lost"
+                    ? "border-rose-500 bg-rose-500/15 text-white shadow-lg shadow-rose-500/10"
+                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+                }`}
+              >
+                <span className="text-2xl">🔍</span>
+                <span className="font-bold text-sm">I Lost an Item</span>
+                <span className="text-xs opacity-75">I am looking to recover my property</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setType("found")}
+                className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition ${
+                  type === "found"
+                    ? "border-emerald-500 bg-emerald-500/15 text-white shadow-lg shadow-emerald-500/10"
+                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+                }`}
+              >
+                <span className="text-2xl">🎁</span>
+                <span className="font-bold text-sm">I Found an Item</span>
+                <span className="text-xs opacity-75">I discovered someone else&apos;s item</span>
+              </button>
+            </div>
+
+            {/* Basic Information Panel */}
+            <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-indigo-400" />
+                <span>Item Information</span>
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Title / Item Name <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Space Gray MacBook Air M2 13-inch"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Category <span className="text-rose-400">*</span>
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Detailed Description <span className="text-rose-400">*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  placeholder="Describe color, stickers, scratches, distinct engravings, case details, and the circumstances..."
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+                <p className="text-[11px] text-slate-400">
+                  💡 Gemini will automatically analyze this text along with the photo to extract brands, colors, materials, and distinct marks.
                 </p>
               </div>
             </div>
 
-            <a
-              href={`/match?reportId=${createdReportId}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-600/30 hover:from-indigo-500 hover:to-blue-500 transition"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Find AI Matches Now</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-          </div>
+            {/* Photo Upload Panel */}
+            <div className="glass-panel rounded-2xl p-6 space-y-4">
+              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-indigo-400" />
+                <span>Photo / Image</span>
+              </h2>
 
-          {/* AI Extracted Attributes Breakdown */}
-          {extractedAttributes && (
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Extracted Structured Attributes (Gemini Flash)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* File Upload Box */}
+                <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-900/30">
+                  <Upload className="w-8 h-8 text-slate-500 mb-2" />
+                  <label className="text-xs font-semibold text-indigo-400 hover:underline cursor-pointer">
+                    Upload image file
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFile}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-400 mt-1">PNG, JPG, WEBP up to 10MB</span>
+                </div>
+
+                {/* Direct Image URL */}
+                <div className="space-y-2 flex flex-col justify-center">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Or paste image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={imageUrl}
+                    onChange={(e) => {
+                      setImageUrl(e.target.value);
+                      setImageBase64(null);
+                    }}
+                    placeholder="https://example.com/photo.jpg"
+                    className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px]">Brand</span>
-                  <span className="font-semibold text-slate-200">{extractedAttributes.brand || "N/A"}</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px]">Primary Color</span>
-                  <span className="font-semibold text-cyan-300">{extractedAttributes.primary_color || "N/A"}</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px]">Item Type</span>
-                  <span className="font-semibold text-slate-200">{extractedAttributes.item_type || "N/A"}</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                  <span className="text-slate-400 block text-[10px]">Condition</span>
-                  <span className="font-semibold text-emerald-300">{extractedAttributes.condition || "N/A"}</span>
-                </div>
-              </div>
-
-              {extractedAttributes.identifying_marks && extractedAttributes.identifying_marks.length > 0 && (
-                <div className="text-xs text-slate-300">
-                  <span className="text-slate-400 font-medium">Distinct Marks: </span>
-                  <span className="text-amber-300">{extractedAttributes.identifying_marks.join("; ")}</span>
-                </div>
-              )}
-
-              {extractedAttributes.enhanced_summary && (
-                <div className="text-xs text-slate-400 italic">
-                  &ldquo;{extractedAttributes.enhanced_summary}&rdquo;
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Secret PIN Box */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-indigo-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                <span>🔐 Reporter Secret Claim PIN</span>
-              </span>
-              <p className="text-[11px] text-slate-400">
-                Save this PIN! You will need it to authorize and resolve matches for this item.
-              </p>
-            </div>
-            <div className="px-4 py-2 rounded-xl bg-slate-950 border border-indigo-500/50 text-base font-mono font-extrabold text-indigo-300 tracking-wider">
-              {createdReportPin || "8492"}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Lost vs Found Toggle */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => setType("lost")}
-            className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition ${
-              type === "lost"
-                ? "border-rose-500 bg-rose-500/15 text-white shadow-lg shadow-rose-500/10"
-                : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
-            }`}
-          >
-            <span className="text-2xl">🔍</span>
-            <span className="font-bold text-sm">I Lost an Item</span>
-            <span className="text-xs opacity-75">I am looking to recover my property</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setType("found")}
-            className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition ${
-              type === "found"
-                ? "border-emerald-500 bg-emerald-500/15 text-white shadow-lg shadow-emerald-500/10"
-                : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
-            }`}
-          >
-            <span className="text-2xl">🎁</span>
-            <span className="font-bold text-sm">I Found an Item</span>
-            <span className="text-xs opacity-75">I discovered someone else&apos;s item</span>
-          </button>
-        </div>
-
-        {/* Basic Information Panel */}
-        <div className="glass-panel rounded-2xl p-6 space-y-6">
-          <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-            <Tag className="w-4 h-4 text-indigo-400" />
-            <span>Item Information</span>
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Title / Item Name <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Space Gray MacBook Air M2 13-inch"
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Category <span className="text-rose-400">*</span>
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300">
-              Detailed Description <span className="text-rose-400">*</span>
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              placeholder="Describe color, stickers, scratches, distinct engravings, case details, and the circumstances..."
-              required
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            />
-            <p className="text-[11px] text-slate-400">
-              💡 Gemini will automatically analyze this text along with the photo to extract brands, colors, materials, and distinct marks.
-            </p>
-          </div>
-        </div>
-
-        {/* Photo Upload Panel */}
-        <div className="glass-panel rounded-2xl p-6 space-y-4">
-          <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-indigo-400" />
-            <span>Photo / Image</span>
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* File Upload Box */}
-            <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-900/30">
-              <Upload className="w-8 h-8 text-slate-500 mb-2" />
-              <label className="text-xs font-semibold text-indigo-400 hover:underline cursor-pointer">
-                Upload image file
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFile}
-                  className="hidden"
-                />
-              </label>
-              <span className="text-[11px] text-slate-400 mt-1">PNG, JPG, WEBP up to 10MB</span>
-            </div>
-
-            {/* Direct Image URL */}
-            <div className="space-y-2 flex flex-col justify-center">
-              <label className="block text-xs font-semibold text-slate-300">
-                Or paste image URL
-              </label>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => {
-                  setImageUrl(e.target.value);
-                  setImageBase64(null);
-                }}
-                placeholder="https://example.com/photo.jpg"
-                className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          {/* Preview */}
-          {(imageBase64 || imageUrl) && (
-            <div className="relative h-44 w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageBase64 || imageUrl}
-                alt="Upload preview"
-                className="w-full h-full object-contain"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setImageBase64(null);
-                  setImageUrl("");
-                }}
-                className="absolute top-2 right-2 px-2 py-1 rounded bg-rose-600/80 text-white text-[11px] hover:bg-rose-500"
-              >
-                Remove
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Location & Time Panel */}
-        <div className="glass-panel rounded-2xl p-6 space-y-6">
-          <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-indigo-400" />
-            <span>Location & Timeline</span>
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Location / Campus Landmark <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Main Campus Library 2nd Floor, or Student Union Lounge"
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {["Library 2nd Floor", "Student Union / Dining", "Science & Tech Hall", "Gym Locker Room", "North Quad Dorms"].map((loc) => (
+              {/* Preview */}
+              {(imageBase64 || imageUrl) && (
+                <div className="relative h-44 w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageBase64 || imageUrl}
+                    alt="Upload preview"
+                    className="w-full h-full object-contain"
+                  />
                   <button
-                    key={loc}
                     type="button"
-                    onClick={() => setLocation(loc)}
-                    className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                    onClick={() => {
+                      setImageBase64(null);
+                      setImageUrl("");
+                    }}
+                    className="absolute top-2 right-2 px-2 py-1 rounded bg-rose-600/80 text-white text-[11px] hover:bg-rose-500"
                   >
-                    📍 {loc}
+                    Remove
                   </button>
-                ))}
+                </div>
+              )}
+            </div>
+
+            {/* Location & Time Panel */}
+            <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-indigo-400" />
+                <span>Location & Timeline</span>
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Location / Campus Landmark <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g. Main Campus Library 2nd Floor, or Student Union Lounge"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {["Library 2nd Floor", "Student Union / Dining", "Science & Tech Hall", "Gym Locker Room", "North Quad Dorms"].map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => setLocation(loc)}
+                        className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+                      >
+                        📍 {loc}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Date & Time <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={dateTime}
+                    onChange={(e) => setDateTime(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Date & Time <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="datetime-local"
-                value={dateTime}
-                onChange={(e) => setDateTime(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-        </div>
+            {/* Contact Information & Ownership Security */}
+            <div className="glass-panel rounded-2xl p-6 space-y-6">
+              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                <User className="w-4 h-4 text-indigo-400" />
+                <span>Contact Method</span>
+              </h2>
 
-        {/* Contact Information & Ownership Security */}
-        <div className="glass-panel rounded-2xl p-6 space-y-6">
-          <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-            <User className="w-4 h-4 text-indigo-400" />
-            <span>Campus Reporter Identity & Security</span>
-          </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Your Full Name <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder="e.g. Sarah Lin or Alex Johnson"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Your Full Name <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={contactName}
-                onChange={(e) => setContactName(e.target.value)}
-                placeholder="e.g. Sarah Lin or Alex Johnson"
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Email / Phone Contact <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={contactInfo}
-                onChange={(e) => setContactInfo(e.target.value)}
-                placeholder="e.g. sarah.lin@campus.edu | 555-0192"
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Email / Phone Contact <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={contactInfo}
+                    onChange={(e) => setContactInfo(e.target.value)}
+                    placeholder="e.g. sarah.lin@campus.edu | 555-0192"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* 5-Digit Campus ID */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                5-Digit Campus ID Number <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                maxLength={5}
-                value={campusId}
-                onChange={(e) => setCampusId(e.target.value.replace(/\D/g, ""))}
-                placeholder="e.g. 90421 or 43554 for Admin"
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono tracking-widest text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-              <p className="text-[11px] text-slate-400">
-                Identifies you as the owner of this report.
-              </p>
-            </div>
+            {errorMsg && (
+              <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
-            {/* Custom PIN */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Custom Security PIN <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="password"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="Choose a PIN to authorize resolution later"
-                required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-              <p className="text-[11px] text-slate-400">
-                Used to resolve/claim matches (or Admin ID 43554).
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {errorMsg && (
-          <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full py-4 rounded-2xl text-base font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 transition transform active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {submitting ? (
-            <>
-              <RefreshCw className="w-5 h-5 animate-spin" />
-              <span>Analyzing with Gemini & Generating 768-d Vector...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-5 h-5" />
-              <span>Submit Report & Run AI Vector Pipeline</span>
-            </>
-          )}
-        </button>
-      </form>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-4 rounded-2xl text-base font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 transition transform active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span>Analyzing with Gemini & Generating 768-d Vector...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  <span>Submit Report & Run AI Vector Pipeline</span>
+                </>
+              )}
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 }
