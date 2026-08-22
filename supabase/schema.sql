@@ -16,6 +16,7 @@ create table if not exists public.reports (
   date_time timestamptz not null default now(),
   contact_name text not null,
   contact_info text not null,
+  reporter_campus_id text default '90421',
   status text not null default 'active' check (status in ('active', 'matched', 'resolved')),
   attributes jsonb not null default '{}'::jsonb,
   -- 768 dimensions matches Google Gemini text-embedding-004
@@ -23,6 +24,9 @@ create table if not exists public.reports (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Ensure reporter_campus_id column exists if table was already created earlier
+alter table public.reports add column if not exists reporter_campus_id text;
 
 -- 3. Create an HNSW index for ultra-fast cosine similarity search
 create index if not exists reports_embedding_hnsw_idx 
@@ -66,6 +70,7 @@ returns table (
   date_time timestamptz,
   contact_name text,
   contact_info text,
+  reporter_campus_id text,
   status text,
   attributes jsonb,
   similarity float,
@@ -86,6 +91,7 @@ begin
     r.date_time,
     r.contact_name,
     r.contact_info,
+    r.reporter_campus_id,
     r.status,
     r.attributes,
     1 - (r.embedding <=> query_embedding) as similarity,
@@ -120,6 +126,7 @@ returns table (
   date_time timestamptz,
   contact_name text,
   contact_info text,
+  reporter_campus_id text,
   status text,
   attributes jsonb,
   similarity float,
@@ -140,6 +147,7 @@ begin
     r.date_time,
     r.contact_name,
     r.contact_info,
+    r.reporter_campus_id,
     r.status,
     r.attributes,
     1 - (r.embedding <=> query_embedding) as similarity,

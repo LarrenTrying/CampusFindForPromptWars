@@ -41,10 +41,13 @@ export async function GET(request: NextRequest) {
             { headers: { "Cache-Control": "no-store, max-age=0" } }
           );
         }
+        if (error) {
+          console.warn("Supabase GET reports error, falling back to local store:", error);
+        }
       }
     }
 
-    // Mock DB Fallback & In-Memory Sync
+    // Local / In-Memory Storage Fallback
     const reports = MockDb.getAllReports({
       type: type || undefined,
       category: category || undefined,
@@ -107,23 +110,15 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
     // 3. Generate 768-d embedding
     const embedding = await getEmbedding(embeddingText);
 
-    // 4. Save to MockDb first so it is immediately visible
     const campusId = body.reporter_campus_id || "90421";
-    const newReport = MockDb.createReport(
-      {
-        ...body,
-        reporter_campus_id: campusId,
-      },
-      extractedAttributes,
-      embedding
-    );
+    const reportId = crypto.randomUUID();
 
-    // 5. Also save to Supabase pgvector if connected
+    // 4. Save to Supabase pgvector if configured
     if (isServerSupabaseConfigured()) {
       const supabase = getServerSupabase();
       if (supabase) {
-        const insertPayload = {
-          id: newReport.id,
+        const insertPayload: any = {
+          id: reportId,
           type: body.type,
           title: body.title,
           description: body.description,
@@ -133,22 +128,39 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
           date_time: body.date_time || new Date().toISOString(),
           contact_name: body.contact_name,
           contact_info: body.contact_info,
-          reporter_campus_id: campusId,
           status: "active",
           attributes: {
             ...extractedAttributes,
             ...body.custom_attributes,
+            reporter_campus_id: campusId,
           },
           embedding: embedding,
         };
 
-        const { data, error } = await supabase
+        // Try inserting with reporter_campus_id column
+        let { data, error } = await supabase
           .from("reports")
-          .insert(insertPayload)
+          .insert({
+            ...insertPayload,
+            reporter_campus_id: campusId,
+          })
           .select()
           .single();
 
+        // If column reporter_campus_id doesn't exist on SQL table, insert standard payload (campusId is already in attributes)
+        if (error && error.message && error.message.includes("reporter_campus_id")) {
+          const retryResult = await supabase
+            .from("reports")
+            .insert(insertPayload)
+            .select()
+            .single();
+          data = retryResult.data;
+          error = retryResult.error;
+        }
+
         if (!error && data) {
+          // Also sync to MockDb for fast local session lookups
+          MockDb.createReportWithId(data);
           return NextResponse.json({
             success: true,
             report: data,
@@ -159,6 +171,16 @@ Summary: ${extractedAttributes.enhanced_summary || ""}
         console.warn("Supabase insert error, saved to local store:", error);
       }
     }
+
+    // 5. Local In-Memory Storage Fallback
+    const newReport = MockDb.createReport(
+      {
+        ...body,
+        reporter_campus_id: campusId,
+      },
+      extractedAttributes,
+      embedding
+    );
 
     return NextResponse.json({
       success: true,

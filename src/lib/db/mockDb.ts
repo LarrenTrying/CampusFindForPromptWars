@@ -83,7 +83,7 @@ export const MockDb = {
   ): Report {
     const list = getDatabase();
     const newReport: Report = {
-      id: "rep-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7),
+      id: crypto.randomUUID(),
       type: input.type,
       title: input.title,
       description: input.description,
@@ -106,6 +106,17 @@ export const MockDb = {
 
     list.unshift(newReport);
     return newReport;
+  },
+
+  createReportWithId(report: Report): Report {
+    const list = getDatabase();
+    const existingIndex = list.findIndex((r) => r.id === report.id);
+    if (existingIndex >= 0) {
+      list[existingIndex] = report;
+    } else {
+      list.unshift(report);
+    }
+    return report;
   },
 
   updateReportStatus(id: string, status: Report["status"]): Report | null {
