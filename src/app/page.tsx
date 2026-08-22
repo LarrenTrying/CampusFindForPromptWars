@@ -114,18 +114,6 @@ export default function HomePage() {
     fetchReports();
   };
 
-  const handleSeed = async () => {
-    setLoading(true);
-    try {
-      await fetch("/api/seed", { method: "POST" });
-      await fetchReports();
-      await fetchStats();
-    } catch (e) {
-      console.error(e);
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-10">
       {/* Hero Section */}
@@ -294,15 +282,15 @@ export default function HomePage() {
             <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
           </form>
 
-          {/* Refresh / Seed Button */}
+          {/* Refresh Button */}
           <div className="flex items-center gap-2">
             <button
-              onClick={handleSeed}
+              onClick={() => { fetchReports(); fetchStats(); }}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 border border-slate-800 transition"
-              title="Reset Sample Data"
+              title="Refresh Feed"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Reset Demo Seed</span>
+              <span>Refresh Feed</span>
             </button>
           </div>
         </div>
@@ -357,14 +345,20 @@ export default function HomePage() {
           <p className="text-sm text-slate-400 max-w-md mx-auto">
             {activeTab === "resolved"
               ? "When a match is confirmed and claimed, it will appear here in the Reunited archive."
-              : "Try adjusting your filters or click the button below to reload demo campus reports."}
+              : "Try adjusting your filters or search keywords."}
           </p>
           <button
-            onClick={handleSeed}
+            onClick={() => {
+              setActiveTab("active_all");
+              setCategoryFilter("All");
+              setSearchQuery("");
+              fetchReports();
+              fetchStats();
+            }}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition"
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Load Sample Campus Data</span>
+            <span>Reset Filters & Refresh</span>
           </button>
         </div>
       ) : (
